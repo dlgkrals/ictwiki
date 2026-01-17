@@ -14,6 +14,9 @@ public class WebConfig implements WebMvcConfigurer {
 
     private final RoleCheckInterceptor roleCheckInterceptor;
 
+    /**
+     * 세션 인증 필터 등록
+     */
     @Bean
     public FilterRegistrationBean<SessionAuthenticationFilter> sessionAuthFilter() {
         FilterRegistrationBean<SessionAuthenticationFilter> registrationBean =
@@ -26,9 +29,13 @@ public class WebConfig implements WebMvcConfigurer {
         return registrationBean;
     }
 
+    /**
+     * 권한 체크 인터셉터 등록
+     */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(roleCheckInterceptor)
-                .addPathPatterns("/api/**");
+                .addPathPatterns("/api/**")  // 모든 API에 적용
+                .order(1);
     }
 }
