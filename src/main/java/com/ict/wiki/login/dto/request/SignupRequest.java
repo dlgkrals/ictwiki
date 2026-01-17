@@ -1,7 +1,6 @@
-package com.ict.wiki.login.dto;
+package com.ict.wiki.login.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
 
 @Getter

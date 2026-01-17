@@ -2,6 +2,7 @@ package com.ict.wiki.login.controller;
 
 import com.ict.wiki.login.domain.Role;
 import com.ict.wiki.login.domain.User;
+import com.ict.wiki.login.dto.response.UserResponse;
 import com.ict.wiki.login.repository.UserRepository;
 import com.ict.wiki.security.annotation.RequireRole;
 import lombok.RequiredArgsConstructor;
@@ -26,9 +27,12 @@ public class AdminController {
      */
     @RequireRole(Role.ADMIN)
     @GetMapping("/users")
-    public ResponseEntity<List<User>> getAllUsers() {
+    public ResponseEntity<List<UserResponse>> getAllUsers() {
         List<User> users = userRepository.findAll();
-        return ResponseEntity.ok(users);
+        List<UserResponse> response = users.stream()
+                .map(UserResponse::from)
+                .toList();
+        return ResponseEntity.ok(response);
     }
 
     /**

@@ -2,8 +2,8 @@ package com.ict.wiki.login.service;
 
 import com.ict.wiki.login.domain.Role;
 import com.ict.wiki.login.domain.User;
-import com.ict.wiki.login.dto.LoginRequest;
-import com.ict.wiki.login.dto.SignupRequest;
+import com.ict.wiki.login.dto.request.LoginRequest;
+import com.ict.wiki.login.dto.request.SignupRequest;
 import com.ict.wiki.login.repository.UserRepository;
 import com.ict.wiki.util.PasswordUtil;
 import lombok.RequiredArgsConstructor;

@@ -1,4 +1,4 @@
-package com.ict.wiki.login.dto;
+package com.ict.wiki.login.dto.request;
 
 import lombok.Getter;
 

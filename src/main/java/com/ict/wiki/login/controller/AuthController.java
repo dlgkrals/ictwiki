@@ -1,9 +1,12 @@
 package com.ict.wiki.login.controller;
 
 import com.ict.wiki.login.domain.User;
-import com.ict.wiki.login.dto.LoginRequest;
-import com.ict.wiki.login.dto.SignupRequest;
+import com.ict.wiki.login.dto.request.LoginRequest;
+import com.ict.wiki.login.dto.request.SignupRequest;
+import com.ict.wiki.login.dto.response.LoginResponse;
+import com.ict.wiki.login.dto.response.UserResponse;
 import com.ict.wiki.login.service.AuthService;
+import com.ict.wiki.util.SessionUtil;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +22,7 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
+    private final SessionUtil sessionUtil;
 
     // 세션에 저장할 사용자 정보 키
     public static final String SESSION_USER_KEY = "loginUser";
@@ -37,7 +41,7 @@ public class AuthController {
      * 성공 시 세션에 사용자 정보 저장
      */
     @PostMapping("/login")
-    public ResponseEntity<Map<String, Object>> login(
+    public ResponseEntity<LoginResponse> login(
             @RequestBody LoginRequest request,
             HttpSession session) {
 
@@ -46,18 +50,9 @@ public class AuthController {
 
         // 세션에 사용자 정보 저장
         session.setAttribute(SESSION_USER_KEY, user.getId());
-
-        // 세션 타임아웃 설정 (30분)
         session.setMaxInactiveInterval(30 * 60);
 
-        // 응답 데이터 구성
-        Map<String, Object> response = new HashMap<>();
-        response.put("name", user.getName());
-        response.put("email", user.getEmail());
-        response.put("role", user.getRole());
-        response.put("message", "로그인 성공");
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(LoginResponse.from(user));
     }
 
     /**
@@ -74,20 +69,9 @@ public class AuthController {
      * 현재 로그인한 사용자 정보 조회
      */
     @GetMapping("/me")
-    public ResponseEntity<Map<String, Object>> getCurrentUser(HttpSession session) {
-        Long userId = (Long) session.getAttribute(SESSION_USER_KEY);
-
-        if (userId == null) {
-            return ResponseEntity.status(401).body(Map.of("message", "로그인이 필요합니다"));
-        }
-
-        // 실제로는 UserService를 통해 사용자 정보를 조회해야 하지만
-        // 간단히 세션 정보만 반환
-        Map<String, Object> response = new HashMap<>();
-        response.put("userId", userId);
-        response.put("message", "인증된 사용자");
-
-        return ResponseEntity.ok(response);
+    public ResponseEntity<UserResponse> getCurrentUser(HttpSession session) {
+        User user = sessionUtil.getCurrentUser(session);
+        return ResponseEntity.ok(UserResponse.from(user));
     }
 
     /**

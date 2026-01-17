@@ -2,6 +2,7 @@ package com.ict.wiki.config;
 
 import com.ict.wiki.login.domain.User;
 import com.ict.wiki.login.repository.UserRepository;
+import com.ict.wiki.util.SessionUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +22,7 @@ import static com.ict.wiki.login.controller.AuthController.SESSION_USER_KEY;
 @RequiredArgsConstructor
 public class JpaConfig {
 
-    private final UserRepository userRepository;
+    private final SessionUtil sessionUtil;  // ✅ SessionUtil 주입
 
     /**
      * JPA Auditing을 위한 현재 사용자 제공
@@ -46,23 +47,12 @@ public class JpaConfig {
                     return Optional.of("system");
                 }
 
-                // 세션에서 사용자 ID 가져오기
-                Long userId = (Long) session.getAttribute(SESSION_USER_KEY);
-
-                if (userId == null) {
-                    return Optional.of("system");
-                }
-
-                // 사용자 정보 조회
-                User user = userRepository.findById(userId).orElse(null);
-
-                if (user == null) {
-                    return Optional.of("system");
-                }
-
+                // ✅ SessionUtil 사용 - 기존의 복잡한 코드 대체!
+                User user = sessionUtil.getCurrentUser(session);
                 return Optional.of(user.getEmail());
 
             } catch (Exception e) {
+                // 로그인하지 않은 경우 또는 에러 발생 시
                 return Optional.of("system");
             }
         };
