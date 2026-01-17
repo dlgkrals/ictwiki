@@ -42,7 +42,7 @@ public class AuthController {
      * 성공 시 세션에 사용자 정보 저장
      */
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(
+    public ResponseEntity<Map<String, Object>> login(
             @RequestBody LoginRequest request,
             HttpSession session) {
 
@@ -53,7 +53,14 @@ public class AuthController {
         session.setAttribute(SESSION_USER_KEY, user.getId());
         session.setMaxInactiveInterval(30 * 60);
 
-        return ResponseEntity.ok(LoginResponse.from(user));
+        // 로그인 후 새로운 CSRF 토큰 발급
+        String csrfToken = CsrfTokenUtil.generateToken(session);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("user", LoginResponse.from(user));
+        response.put("csrfToken", csrfToken);  // ← CSRF 토큰 추가
+
+        return ResponseEntity.ok(response);
     }
 
     /**

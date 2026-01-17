@@ -15,7 +15,7 @@ public class WebConfig implements WebMvcConfigurer {
     private final RoleCheckInterceptor roleCheckInterceptor;
 
     /**
-     * 보안 헤더 필터 등록
+     * 보안 헤더 필터 등록 (최우선)
      */
     @Bean
     public FilterRegistrationBean<SecurityHeaderFilter> securityHeaderFilter() {
@@ -30,6 +30,21 @@ public class WebConfig implements WebMvcConfigurer {
     }
 
     /**
+     * XSS 방지 필터 등록
+     */
+    @Bean
+    public FilterRegistrationBean<XssFilter> xssFilter() {
+        FilterRegistrationBean<XssFilter> registrationBean =
+                new FilterRegistrationBean<>();
+
+        registrationBean.setFilter(new XssFilter());
+        registrationBean.addUrlPatterns("/*");
+        registrationBean.setOrder(2);
+
+        return registrationBean;
+    }
+
+    /**
      * CSRF 방지 필터 등록
      */
     @Bean
@@ -39,7 +54,7 @@ public class WebConfig implements WebMvcConfigurer {
 
         registrationBean.setFilter(new CsrfFilter());
         registrationBean.addUrlPatterns("/api/*");
-        registrationBean.setOrder(2);
+        registrationBean.setOrder(3);
 
         return registrationBean;
     }
@@ -54,7 +69,7 @@ public class WebConfig implements WebMvcConfigurer {
 
         registrationBean.setFilter(new SessionAuthenticationFilter());
         registrationBean.addUrlPatterns("/api/*"); // /api로 시작하는 모든 경로에 적용
-        registrationBean.setOrder(3); // 필터 우선순위
+        registrationBean.setOrder(4); // CSRF 검증 후 인증 체크
 
         return registrationBean;
     }
