@@ -15,6 +15,21 @@ public class WebConfig implements WebMvcConfigurer {
     private final RoleCheckInterceptor roleCheckInterceptor;
 
     /**
+     * 보안 헤더 필터 등록
+     */
+    @Bean
+    public FilterRegistrationBean<SecurityHeaderFilter> securityHeaderFilter() {
+        FilterRegistrationBean<SecurityHeaderFilter> registrationBean =
+                new FilterRegistrationBean<>();
+
+        registrationBean.setFilter(new SecurityHeaderFilter());
+        registrationBean.addUrlPatterns("/*"); // 모든 경로에 적용
+        registrationBean.setOrder(0); // 가장 먼저 실행
+
+        return registrationBean;
+    }
+
+    /**
      * 세션 인증 필터 등록
      */
     @Bean
