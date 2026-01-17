@@ -36,6 +36,10 @@ public class SecurityHeaderFilter extends OncePerRequestFilter {
         response.setHeader("Permissions-Policy",
                 "camera=(), microphone=(), geolocation=(), interest-cohort=()");
 
+        // XSS, 코드 인젝션 공격 방지
+        response.setHeader("Content-Security-Policy",
+                "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';");
+
         log.debug("보안 헤더 설정 완료 - URI: {}", request.getRequestURI());
         filterChain.doFilter(request, response);
     }
