@@ -6,6 +6,7 @@ import com.ict.wiki.login.dto.request.SignupRequest;
 import com.ict.wiki.login.dto.response.LoginResponse;
 import com.ict.wiki.login.dto.response.UserResponse;
 import com.ict.wiki.login.service.AuthService;
+import com.ict.wiki.util.CsrfTokenUtil;
 import com.ict.wiki.util.SessionUtil;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -81,5 +82,15 @@ public class AuthController {
     public ResponseEntity<Boolean> checkEmail(@RequestParam String emailPrefix) {
         boolean isDuplicate = authService.checkEmailDuplicate(emailPrefix);
         return ResponseEntity.ok(isDuplicate);
+    }
+
+    /**
+     *
+     * csrf 토큰 발급
+     */
+    @GetMapping("/csrf-token")
+    public ResponseEntity<Map<String, String>> getCsrfToken(HttpSession session) {
+        String token = CsrfTokenUtil.generateToken(session);
+        return ResponseEntity.ok(Map.of("csrfToken", token));
     }
 }

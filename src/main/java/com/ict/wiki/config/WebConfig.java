@@ -24,7 +24,22 @@ public class WebConfig implements WebMvcConfigurer {
 
         registrationBean.setFilter(new SecurityHeaderFilter());
         registrationBean.addUrlPatterns("/*"); // 모든 경로에 적용
-        registrationBean.setOrder(0); // 가장 먼저 실행
+        registrationBean.setOrder(1); // 가장 먼저 실행
+
+        return registrationBean;
+    }
+
+    /**
+     * CSRF 방지 필터 등록
+     */
+    @Bean
+    public FilterRegistrationBean<CsrfFilter> csrfFilter() {
+        FilterRegistrationBean<CsrfFilter> registrationBean =
+                new FilterRegistrationBean<>();
+
+        registrationBean.setFilter(new CsrfFilter());
+        registrationBean.addUrlPatterns("/api/*");
+        registrationBean.setOrder(2);
 
         return registrationBean;
     }
@@ -39,7 +54,7 @@ public class WebConfig implements WebMvcConfigurer {
 
         registrationBean.setFilter(new SessionAuthenticationFilter());
         registrationBean.addUrlPatterns("/api/*"); // /api로 시작하는 모든 경로에 적용
-        registrationBean.setOrder(1); // 필터 우선순위
+        registrationBean.setOrder(3); // 필터 우선순위
 
         return registrationBean;
     }
