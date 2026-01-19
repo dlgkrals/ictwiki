@@ -8,6 +8,7 @@ import com.ict.wiki.login.dto.response.UserResponse;
 import com.ict.wiki.login.service.AuthService;
 import com.ict.wiki.util.CsrfTokenUtil;
 import com.ict.wiki.util.SessionUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -39,26 +40,35 @@ public class AuthController {
 
     /**
      * 로그인
-     * 성공 시 세션에 사용자 정보 저장
+     * 성공 시 세션 ID 재생성 후 사용자 정보 저장 + 새로운 CSRF 토큰 발급
      */
     @PostMapping("/login")
     public ResponseEntity<Map<String, Object>> login(
             @RequestBody LoginRequest request,
-            HttpSession session) {
+            HttpServletRequest httpRequest) {  // ← HttpServletRequest 추가
 
         // 인증 처리
         User user = authService.login(request);
 
-        // 세션에 사용자 정보 저장
-        session.setAttribute(SESSION_USER_KEY, user.getId());
-        session.setMaxInactiveInterval(30 * 60);
+        // ⭐ 세션 고정 공격 방지: 기존 세션 무효화 후 새 세션 생성
+        HttpSession oldSession = httpRequest.getSession(false);
+        if (oldSession != null) {
+            oldSession.invalidate();  // 기존 세션 무효화
+        }
+
+        // 새로운 세션 생성
+        HttpSession newSession = httpRequest.getSession(true);
+
+        // 새 세션에 사용자 정보 저장
+        newSession.setAttribute(SESSION_USER_KEY, user.getId());
+        newSession.setMaxInactiveInterval(30 * 60); // 30분
 
         // 로그인 후 새로운 CSRF 토큰 발급
-        String csrfToken = CsrfTokenUtil.generateToken(session);
+        String csrfToken = CsrfTokenUtil.generateToken(newSession);
 
         Map<String, Object> response = new HashMap<>();
         response.put("user", LoginResponse.from(user));
-        response.put("csrfToken", csrfToken);  // ← CSRF 토큰 추가
+        response.put("csrfToken", csrfToken);
 
         return ResponseEntity.ok(response);
     }
@@ -92,8 +102,7 @@ public class AuthController {
     }
 
     /**
-     *
-     * csrf 토큰 발급
+     * CSRF 토큰 발급
      */
     @GetMapping("/csrf-token")
     public ResponseEntity<Map<String, String>> getCsrfToken(HttpSession session) {
