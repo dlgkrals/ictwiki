@@ -18,6 +18,7 @@ import java.time.LocalDate;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final LoginAttemptService loginAttemptService;
 
     /**
      * 회원가입
@@ -40,7 +41,7 @@ public class AuthService {
                 .department(request.getDepartment())
                 .role(Role.STUDENT)
                 .active(true)
-                .lastVerifiedDate(LocalDate.now()) // 가입 시 인증 완료로 처리
+                .lastVerifiedDate(LocalDate.now())
                 .build();
 
         userRepository.save(user);
@@ -55,25 +56,83 @@ public class AuthService {
     public User login(LoginRequest request) {
         String fullEmail = request.getFullEmail();
 
-        // 사용자 조회
-        User user = userRepository.findByEmail(fullEmail)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 계정입니다"));
+        // ⭐ 1. 계정 잠금 확인
+        if (loginAttemptService.isLocked(fullEmail)) {
+            long remainingSeconds = loginAttemptService.getRemainingLockTime(fullEmail);
+            long remainingMinutes = remainingSeconds / 60;
 
-        // 비밀번호 확인
-        if (!PasswordUtil.matches(request.getPassword(), user.getPassword())) {
-            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다");
+            throw new IllegalArgumentException(
+                    String.format("로그인 시도 횟수를 초과했습니다. %d분 %d초 후 다시 시도해주세요.",
+                            remainingMinutes, remainingSeconds % 60)
+            );
         }
 
-        // 계정 활성화 확인
+        // 2. 사용자 조회
+        User user = userRepository.findByEmail(fullEmail)
+                .orElseThrow(() -> {
+                    // ⭐ 사용자 없음 → 실패 기록
+                    loginAttemptService.loginFailed(fullEmail);
+
+                    // 실패 후 잠금 여부 확인
+                    if (loginAttemptService.isLocked(fullEmail)) {
+                        long remainingSeconds = loginAttemptService.getRemainingLockTime(fullEmail);
+                        long remainingMinutes = remainingSeconds / 60;
+                        return new IllegalArgumentException(
+                                String.format("로그인 시도 횟수를 초과했습니다. %d분 %d초 후 다시 시도해주세요.",
+                                        remainingMinutes, remainingSeconds % 60)
+                        );
+                    }
+
+                    int remainingAttempts = loginAttemptService.getRemainingAttempts(fullEmail);
+                    if (remainingAttempts > 0) {
+                        return new IllegalArgumentException(
+                                String.format("이메일 또는 비밀번호가 일치하지 않습니다. (남은 시도: %d회)",
+                                        remainingAttempts)
+                        );
+                    } else {
+                        return new IllegalArgumentException("이메일 또는 비밀번호가 일치하지 않습니다");
+                    }
+                });
+
+        // 3. 비밀번호 확인
+        if (!PasswordUtil.matches(request.getPassword(), user.getPassword())) {
+            // ⭐ 비밀번호 틀림 → 실패 기록
+            loginAttemptService.loginFailed(fullEmail);
+
+            // ⭐ 실패 후 잠금 여부 확인 (5회 또는 10회에 도달했을 수 있음)
+            if (loginAttemptService.isLocked(fullEmail)) {
+                long remainingSeconds = loginAttemptService.getRemainingLockTime(fullEmail);
+                long remainingMinutes = remainingSeconds / 60;
+                throw new IllegalArgumentException(
+                        String.format("로그인 시도 횟수를 초과했습니다. %d분 %d초 후 다시 시도해주세요.",
+                                remainingMinutes, remainingSeconds % 60)
+                );
+            }
+
+            int remainingAttempts = loginAttemptService.getRemainingAttempts(fullEmail);
+            if (remainingAttempts > 0) {
+                throw new IllegalArgumentException(
+                        String.format("이메일 또는 비밀번호가 일치하지 않습니다. (남은 시도: %d회)",
+                                remainingAttempts)
+                );
+            } else {
+                throw new IllegalArgumentException("이메일 또는 비밀번호가 일치하지 않습니다");
+            }
+        }
+
+        // 4. 계정 활성화 확인
         if (!user.isActive()) {
             throw new IllegalArgumentException("비활성화된 계정입니다");
         }
 
-        // 마지막 인증 날짜 확인 (3개월)
+        // 5. 마지막 인증 날짜 확인 (3개월)
         if (user.getLastVerifiedDate() == null ||
                 user.getLastVerifiedDate().isBefore(LocalDate.now().minusMonths(3))) {
             throw new IllegalArgumentException("계정 재인증이 필요합니다. 이메일을 확인해주세요");
         }
+
+        // ⭐ 6. 로그인 성공 → 실패 기록 초기화
+        loginAttemptService.loginSucceeded(fullEmail);
 
         return user;
     }
