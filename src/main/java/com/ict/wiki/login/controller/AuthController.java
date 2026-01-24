@@ -6,18 +6,21 @@ import com.ict.wiki.login.dto.request.SignupRequest;
 import com.ict.wiki.login.dto.response.LoginResponse;
 import com.ict.wiki.login.dto.response.UserResponse;
 import com.ict.wiki.login.service.AuthService;
+import com.ict.wiki.login.service.SessionManagementService;
 import com.ict.wiki.util.CsrfTokenUtil;
 import com.ict.wiki.util.SessionUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -25,6 +28,7 @@ public class AuthController {
 
     private final AuthService authService;
     private final SessionUtil sessionUtil;
+    private final SessionManagementService sessionManagementService;
 
     // 세션에 저장할 사용자 정보 키
     public static final String SESSION_USER_KEY = "loginUser";
@@ -40,12 +44,11 @@ public class AuthController {
 
     /**
      * 로그인
-     * 성공 시 세션 ID 재생성 후 사용자 정보 저장 + 새로운 CSRF 토큰 발급
      */
     @PostMapping("/login")
     public ResponseEntity<Map<String, Object>> login(
             @RequestBody LoginRequest request,
-            HttpServletRequest httpRequest) {  // ← HttpServletRequest 추가
+            HttpServletRequest httpRequest) {
 
         // 인증 처리
         User user = authService.login(request);
@@ -53,11 +56,16 @@ public class AuthController {
         // ⭐ 세션 고정 공격 방지: 기존 세션 무효화 후 새 세션 생성
         HttpSession oldSession = httpRequest.getSession(false);
         if (oldSession != null) {
-            oldSession.invalidate();  // 기존 세션 무효화
+            oldSession.invalidate();
         }
 
         // 새로운 세션 생성
         HttpSession newSession = httpRequest.getSession(true);
+        String newSessionId = newSession.getId();
+
+        // ⭐ 중복 로그인 방지: 기존 세션 무효화 및 새 세션 등록
+        // (SessionManagementService에서 실제 세션 무효화 처리)
+        sessionManagementService.registerSession(user.getEmail(), newSessionId);
 
         // 새 세션에 사용자 정보 저장
         newSession.setAttribute(SESSION_USER_KEY, user.getId());
@@ -70,6 +78,8 @@ public class AuthController {
         response.put("user", LoginResponse.from(user));
         response.put("csrfToken", csrfToken);
 
+        log.info("로그인 성공 - Email: {}, SessionId: {}", user.getEmail(), newSessionId);
+
         return ResponseEntity.ok(response);
     }
 
@@ -79,6 +89,10 @@ public class AuthController {
      */
     @PostMapping("/logout")
     public ResponseEntity<String> logout(HttpSession session) {
+
+        String sessionId = session.getId();
+        sessionManagementService.removeSession(sessionId);
+
         session.invalidate();
         return ResponseEntity.ok("로그아웃되었습니다");
     }

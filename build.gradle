@@ -35,6 +35,9 @@ dependencies {
 	// Guava Cache (로그인 시도 관리)
 	implementation 'com.google.guava:guava:33.0.0-jre'
 
+	//세션 관리
+	implementation 'org.springframework.session:spring-session-core'
+
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'com.mysql:mysql-connector-j'
 	annotationProcessor 'org.projectlombok:lombok'

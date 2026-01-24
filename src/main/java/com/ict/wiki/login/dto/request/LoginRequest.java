@@ -1,8 +1,9 @@
 package com.ict.wiki.login.dto.request;
 
+import lombok.Data;
 import lombok.Getter;
 
-@Getter
+@Data
 public class LoginRequest {
 
     private String emailPrefix; // "student"
