@@ -19,6 +19,8 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final LoginAttemptService loginAttemptService;
+    private final EmailVerificationService emailVerificationService;
+
 
     /**
      * 회원가입
@@ -40,10 +42,11 @@ public class AuthService {
                 .studentId(request.getStudentId())
                 .department(request.getDepartment())
                 .role(Role.STUDENT)
-                .active(true)
-                .lastVerifiedDate(LocalDate.now())
+                .active(false)
+                .lastVerifiedDate(null)
                 .build();
 
+        emailVerificationService.sendVerificationEmail(fullEmail);
         userRepository.save(user);
     }
 
@@ -122,7 +125,7 @@ public class AuthService {
 
         // 4. 계정 활성화 확인
         if (!user.isActive()) {
-            throw new IllegalArgumentException("비활성화된 계정입니다");
+            throw new IllegalArgumentException("이메일 인증 필요");
         }
 
         // 5. 마지막 인증 날짜 확인 (3개월)

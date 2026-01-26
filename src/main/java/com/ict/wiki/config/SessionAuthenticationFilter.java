@@ -27,6 +27,8 @@ public class SessionAuthenticationFilter extends OncePerRequestFilter {
             "/api/auth/signup",
             "/api/auth/login",
             "/api/auth/check-email",
+            "/api/auth/verify-email",
+            "/api/auth/resend-verification",
             "/api/test/public"
     );
 

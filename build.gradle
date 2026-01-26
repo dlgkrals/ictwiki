@@ -29,6 +29,9 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 
+	// 이메일 발송
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+
 	// BCrypt 암호화를 위한 의존성
 	implementation 'org.mindrot:jbcrypt:0.4'
 

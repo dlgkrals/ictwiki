@@ -37,7 +37,7 @@ public class User extends BaseEntity {
 
     @Column(nullable = false)
     @Builder.Default
-    private boolean active = true;
+    private boolean active = false;
 
     private LocalDate lastVerifiedDate; // 마지막 인증 날짜
 
@@ -53,6 +53,7 @@ public class User extends BaseEntity {
 
     // 인증 완료 처리
     public void verify() {
+        this.active = true;
         this.lastVerifiedDate = LocalDate.now();
     }
 }
