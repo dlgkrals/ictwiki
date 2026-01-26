@@ -37,7 +37,9 @@ public class CsrfFilter extends OncePerRequestFilter {
     private static final List<String> EXCLUDE_PATHS = Arrays.asList(
             "/api/auth/login",
             "/api/auth/signup",
-            "/api/auth/check-email"
+            "/api/auth/check-email",
+            "/api/auth/verify-email",
+            "/api/auth/resend-verification"
     );
 
     @Override
