@@ -2,6 +2,7 @@ package com.ict.wiki.login.controller;
 
 import com.ict.wiki.login.domain.User;
 import com.ict.wiki.login.dto.request.LoginRequest;
+import com.ict.wiki.login.dto.request.PasswordChangeRequest;
 import com.ict.wiki.login.dto.request.PasswordResetRequest;
 import com.ict.wiki.login.dto.request.SignupRequest;
 import com.ict.wiki.login.dto.response.LoginResponse;
@@ -211,6 +212,31 @@ public class AuthController {
 
         return ResponseEntity.ok(Map.of(
                 "message", "비밀번호가 성공적으로 변경되었습니다. 새 비밀번호로 로그인해주세요."
+        ));
+    }
+
+    /**
+     * 비밀번호 변경 (로그인 상태)
+     * PUT /api/auth/change-password
+     * Body: { "currentPassword": "Old123!@#", "newPassword": "New123!@#" }
+     */
+    @PutMapping("/change-password")
+    public ResponseEntity<Map<String, String>> changePassword(
+            @Valid @RequestBody PasswordChangeRequest request,
+            HttpSession session) {
+
+        // 세션에서 현재 사용자 정보 가져오기
+        User user = sessionUtil.getCurrentUser(session);
+
+        // 비밀번호 변경
+        authService.changePassword(
+                user.getId(),
+                request.getCurrentPassword(),
+                request.getNewPassword()
+        );
+
+        return ResponseEntity.ok(Map.of(
+                "message", "비밀번호가 성공적으로 변경되었습니다."
         ));
     }
 }

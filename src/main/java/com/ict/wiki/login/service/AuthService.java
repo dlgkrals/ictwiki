@@ -7,11 +7,13 @@ import com.ict.wiki.login.dto.request.SignupRequest;
 import com.ict.wiki.login.repository.UserRepository;
 import com.ict.wiki.util.PasswordUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -149,5 +151,35 @@ public class AuthService {
     public boolean checkEmailDuplicate(String emailPrefix) {
         String fullEmail = emailPrefix + "@g.seoil.ac.kr";
         return userRepository.existsByEmail(fullEmail);
+    }
+
+    /**
+     * 비밀번호 변경 (로그인 상태)
+     *
+     * @param userId 사용자 ID
+     * @param currentPassword 현재 비밀번호
+     * @param newPassword 새 비밀번호
+     */
+    public void changePassword(Long userId, String currentPassword, String newPassword) {
+        // 사용자 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+
+        // ✅ 현재 비밀번호 확인
+        if (!PasswordUtil.matches(currentPassword, user.getPassword())) {
+            throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다");
+        }
+
+        // ✅ 기존 비밀번호와 동일한지 검증 (재사용 로직)
+        if (PasswordUtil.matches(newPassword, user.getPassword())) {
+            throw new IllegalArgumentException("기존 비밀번호와 동일한 비밀번호는 사용할 수 없습니다");
+        }
+
+        // ✅ 비밀번호 암호화 및 업데이트 (재사용 로직)
+        String encodedPassword = PasswordUtil.encode(newPassword);
+        user.updatePassword(encodedPassword);
+        userRepository.save(user);
+
+        log.info("비밀번호 변경 완료 - UserId: {}, Email: {}", userId, user.getEmail());
     }
 }
