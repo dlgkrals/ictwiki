@@ -1,7 +1,6 @@
 package com.ict.wiki.util;
 
 import jakarta.mail.MessagingException;
-import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,8 +8,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-
-import java.io.UnsupportedEncodingException;
 
 /**
  * 이메일 발송 서비스
@@ -71,13 +68,14 @@ public class EmailService {
      */
     public void sendPasswordResetEmail(String toEmail, String token) {
         String subject = "[ICT Wiki] 비밀번호 재설정";
-        String resetUrl = baseUrl + "/api/auth/reset-password?token=" + token;
+        String resetUrl = baseUrl + "/reset-password?token=" + token;  // ⭐ 프론트엔드 URL
 
         String content = String.format("""
                 <html>
                 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
                     <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
                         <h2 style="color: #dc3545;">비밀번호 재설정 요청</h2>
+                        <p>비밀번호 재설정을 요청하셨습니다.</p>
                         <p>아래 버튼을 클릭하여 새 비밀번호를 설정해주세요.</p>
                         <p style="text-align: center; margin: 30px 0;">
                             <a href="%s" style="display: inline-block; padding: 12px 24px; background-color: #dc3545; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
@@ -137,15 +135,14 @@ public class EmailService {
     }
 
     /**
-     * HTML 이메일 발송 (UTF-8 인코딩 적용)
+     * HTML 이메일 발송
      */
     private void sendHtmlEmail(String to, String subject, String content) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            // 발신자 이름 UTF-8 인코딩 (한글 지원)
-            helper.setFrom(new InternetAddress(fromEmail, "서일대학교 ICT지원실", "UTF-8"));
+            helper.setFrom(fromEmail);
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(content, true); // HTML 허용
@@ -153,7 +150,7 @@ public class EmailService {
             mailSender.send(message);
             log.info("이메일 발송 성공 - To: {}, Subject: {}", to, subject);
 
-        } catch (MessagingException | UnsupportedEncodingException e) {
+        } catch (MessagingException e) {
             log.error("이메일 발송 실패 - To: {}, Error: {}", to, e.getMessage());
             throw new RuntimeException("이메일 발송에 실패했습니다", e);
         }

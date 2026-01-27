@@ -39,6 +39,8 @@ public class CsrfFilter extends OncePerRequestFilter {
             "/api/auth/signup",
             "/api/auth/check-email",
             "/api/auth/verify-email",
+            "/api/auth/forgot-password",
+            "/api/auth/reset-password",
             "/api/auth/resend-verification"
     );
 
