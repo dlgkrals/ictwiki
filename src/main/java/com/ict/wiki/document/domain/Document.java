@@ -1,0 +1,110 @@
+package com.ict.wiki.document.domain;
+
+import com.ict.wiki.BaseEntity;
+import com.ict.wiki.login.domain.User;
+import jakarta.persistence.*;
+import lombok.*;
+
+/**
+ * 위키 문서 엔티티
+ * - 마크다운 형식 지원
+ * - 문서 간 링크 지원 [[문서제목]]
+ * - 버전 관리 (수정 이력)
+ */
+@Entity
+@Table(name = "documents")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Builder
+public class Document extends BaseEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    /**
+     * 문서 제목 (고유)
+     * - URL 경로로도 사용
+     * - 예: "Java 설치 가이드"
+     */
+    @Column(nullable = false, unique = true, length = 200)
+    private String title;
+
+    /**
+     * 문서 내용 (마크다운)
+     * - 마크다운 형식으로 저장
+     * - 위키 링크: [[문서제목]] 또는 [[표시텍스트|문서제목]]
+     */
+    @Column(nullable = false, columnDefinition = "TEXT")
+    @Lob
+    private String content;
+
+    /**
+     * 작성자
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "author_id", nullable = false)
+    private User author;
+
+    /**
+     * 조회수
+     */
+    @Column(nullable = false)
+    @Builder.Default
+    private Long viewCount = 0L;
+
+    /**
+     * 문서 버전 (수정 횟수)
+     */
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer version = 1;
+
+    /**
+     * 마지막 수정자
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "last_editor_id")
+    private User lastEditor;
+
+    /**
+     * 삭제 여부 (소프트 삭제)
+     */
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean deleted = false;
+
+    // ========== 비즈니스 메서드 ==========
+
+    /**
+     * 문서 수정
+     */
+    public void update(String title, String content, User editor) {
+        this.title = title;
+        this.content = content;
+        this.lastEditor = editor;
+        this.version++;
+    }
+
+    /**
+     * 조회수 증가
+     */
+    public void incrementViewCount() {
+        this.viewCount++;
+    }
+
+    /**
+     * 문서 삭제 (소프트 삭제)
+     */
+    public void delete() {
+        this.deleted = true;
+    }
+
+    /**
+     * 문서 복원
+     */
+    public void restore() {
+        this.deleted = false;
+    }
+}
