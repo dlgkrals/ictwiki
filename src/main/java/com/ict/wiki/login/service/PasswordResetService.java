@@ -3,7 +3,6 @@ package com.ict.wiki.login.service;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.ict.wiki.login.domain.User;
-import com.ict.wiki.login.repository.UserRepository;
 import com.ict.wiki.util.EmailService;
 import com.ict.wiki.util.PasswordUtil;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 @Transactional
 public class PasswordResetService {
 
-    private final UserRepository userRepository;
+    private final UserService userService;  // ✅ UserRepository → UserService
     private final EmailService emailService;
 
     // 재설정 토큰 캐시 (1시간 후 자동 만료)
@@ -51,8 +50,7 @@ public class PasswordResetService {
      */
     public void sendPasswordResetEmail(String email) {
         // 사용자 존재 확인
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 이메일입니다"));
+        User user = userService.findByEmail(email);  // ✅ 변경
 
         // 계정 활성화 확인
         if (!user.isActive()) {
@@ -110,8 +108,7 @@ public class PasswordResetService {
         }
 
         // 사용자 조회
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+        User user = userService.findByEmail(email);  // ✅ 변경
 
         // ⭐ 기존 비밀번호와 동일한지 검증
         if (PasswordUtil.matches(newPassword, user.getPassword())) {
@@ -120,8 +117,7 @@ public class PasswordResetService {
 
         // 비밀번호 암호화 및 업데이트
         String encodedPassword = PasswordUtil.encode(newPassword);
-        user.updatePassword(encodedPassword);
-        userRepository.save(user);
+        userService.updatePassword(user, encodedPassword);  // ✅ 변경
 
         // 토큰 즉시 삭제 (1회용)
         resetTokenCache.invalidate(token);

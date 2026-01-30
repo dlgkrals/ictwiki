@@ -3,7 +3,6 @@ package com.ict.wiki.login.service;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.ict.wiki.login.domain.User;
-import com.ict.wiki.login.repository.UserRepository;
 import com.ict.wiki.util.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 @Transactional
 public class EmailVerificationService {
 
-    private final UserRepository userRepository;
+    private final UserService userService;  // ✅ UserRepository → UserService
     private final EmailService emailService;
 
     // 인증 토큰 캐시 (30분 후 자동 만료)
@@ -83,8 +82,7 @@ public class EmailVerificationService {
         }
 
         // 사용자 조회
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+        User user = userService.findByEmail(email);  // ✅ 변경
 
         // 이미 인증된 경우
         if (user.isActive()) {
@@ -95,8 +93,7 @@ public class EmailVerificationService {
         }
 
         // 계정 활성화 + 인증 날짜 업데이트
-        user.verify();
-        userRepository.save(user);
+        userService.activateUser(user);  // ✅ 변경
 
         // 토큰 즉시 삭제 (1회용)
         verificationTokenCache.invalidate(token);
@@ -115,8 +112,7 @@ public class EmailVerificationService {
      */
     public void resendVerificationEmail(String email) {
         // 사용자 존재 확인
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 이메일입니다"));
+        User user = userService.findByEmail(email);  // ✅ 변경
 
         // 이미 인증된 경우
         if (user.isActive()) {

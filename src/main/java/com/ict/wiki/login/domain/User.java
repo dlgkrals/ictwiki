@@ -56,4 +56,9 @@ public class User extends BaseEntity {
         this.active = true;
         this.lastVerifiedDate = LocalDate.now();
     }
+
+    //사용자 권한 변경
+    public void updateRole(Role newRole) {
+        this.role = newRole;
+    }
 }
