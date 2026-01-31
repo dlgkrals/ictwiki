@@ -58,7 +58,7 @@ public class DocumentService {
      * 문서 조회 (ID)
      */
     public Document getDocument(Long id) {
-        return documentRepository.findById(id)
+        return documentRepository.findByIdWithAuthor(id)
                 .orElseThrow(() -> new IllegalArgumentException("문서를 찾을 수 없습니다: " + id));
     }
 
@@ -70,18 +70,35 @@ public class DocumentService {
                 .orElseThrow(() -> new IllegalArgumentException("문서를 찾을 수 없습니다: " + title));
     }
 
+//    /**
+//     * 문서 조회 + 조회수 증가
+//     */
+//    @Transactional
+//    public Document getDocumentAndIncrementView(Long id) {
+//        Document document = getDocument(id);
+//
+//        // 삭제된 문서는 조회수 증가 안 함
+//        if (!document.getDeleted()) {
+//            documentRepository.incrementViewCount(id);
+//            document.incrementViewCount();
+//            log.debug("조회수 증가 - Document ID: {}, New Count: {}", id, document.getViewCount());
+//        }
+//
+//        return document;
+//    }
+
     /**
-     * 문서 조회 + 조회수 증가
+     * 임시
      */
     @Transactional
     public Document getDocumentAndIncrementView(Long id) {
-        Document document = getDocument(id);
+        // author + lastEditor 모두 fetch join
+        Document document = documentRepository.findByIdWithAuthorAndLastEditor(id)
+                .orElseThrow(() -> new IllegalArgumentException("문서를 찾을 수 없습니다: " + id));
 
-        // 삭제된 문서는 조회수 증가 안 함
+        // 삭제되지 않은 문서만 조회수 증가
         if (!document.getDeleted()) {
-            documentRepository.incrementViewCount(id);
-            document.incrementViewCount();
-            log.debug("조회수 증가 - Document ID: {}, New Count: {}", id, document.getViewCount());
+            documentRepository.incrementViewCount(id);  // 벌크 업데이트 (DB에서만 +1)
         }
 
         return document;

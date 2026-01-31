@@ -83,4 +83,21 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
      */
     @Query("SELECT d FROM Document d JOIN FETCH d.author WHERE d.deleted = true ORDER BY d.modifiedAt DESC")
     List<Document> findAllDeleted();
+
+    /**
+     * 단건 조회
+     */
+    @Query("SELECT d FROM Document d JOIN FETCH d.author WHERE d.id = :id")
+    Optional<Document> findByIdWithAuthor(@Param("id") Long id);
+
+    /**
+     * 마지막 작업자 포함 조회
+     */
+    @Query("""
+    SELECT d FROM Document d
+    JOIN FETCH d.author
+    LEFT JOIN FETCH d.lastEditor
+    WHERE d.id = :id
+""")
+    Optional<Document> findByIdWithAuthorAndLastEditor(@Param("id") Long id);
 }
