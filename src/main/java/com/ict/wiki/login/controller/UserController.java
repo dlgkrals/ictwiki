@@ -21,7 +21,6 @@ public class UserController {
 
     /**
      * STAFF 목록 조회
-     * GET /api/users/staff
      */
     @GetMapping("/staff")
     public ResponseEntity<List<UserSummaryResponse>> getStaffUsers() {
