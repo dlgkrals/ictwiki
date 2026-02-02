@@ -1,6 +1,7 @@
 package com.ict.wiki.inquiry.service;
 
 import com.ict.wiki.inquiry.domain.*;
+import com.ict.wiki.inquiry.dto.request.InquirySaveRequest;
 import com.ict.wiki.inquiry.repository.InquiryRepository;
 import com.ict.wiki.login.domain.User;
 import com.ict.wiki.login.service.UserService;
@@ -33,17 +34,25 @@ public class InquiryService {
      * 민원 생성
      */
     @Transactional
-    public Inquiry createInquiry(String title, InquiryType type, String description, String requester) {
+    public Inquiry createInquiry(InquirySaveRequest request) {
         Inquiry inquiry = Inquiry.builder()
-                .title(title)
-                .type(type)
-                .status(InquiryStatus.PENDING)
-                .description(description)
-                .requester(requester)
+                .title(request.getTitle())
+                .type(request.getType())
+                .description(request.getDescription())
+                .requester(request.getRequester())
+                .status(request.getStatus() != null ? request.getStatus() : InquiryStatus.PENDING)
+                .workDate(request.getWorkDate())
+                .solution(request.getSolution())
                 .build();
 
+        // 작업자 배정 (있으면)
+        if (request.getWorkerId() != null) {
+            User worker = userService.findById(request.getWorkerId());
+            inquiry.assignWorker(worker, request.getMethod());
+        }
+
         Inquiry saved = inquiryRepository.save(inquiry);
-        log.info("민원 생성 완료 - ID: {}, Title: {}", saved.getId(), title);
+        log.info("민원 생성 완료 - ID: {}, Title: {}", saved.getId(), request.getTitle());
         return saved;
     }
 
@@ -137,58 +146,28 @@ public class InquiryService {
      * 민원 전체 수정
      */
     @Transactional
-    public Inquiry update(Long id, String title, InquiryType type, InquiryStatus status,
-                          Long workerId, LocalDate workDate, InquiryMethod method,
-                          String description, String solution, String requester) {
+    public Inquiry update(Long id, InquirySaveRequest request) {
         Inquiry inquiry = findById(id);
 
+        // 작업자 처리
         User worker = null;
-        if (workerId != null) {
-            worker = userService.findById(workerId);
+        if (request.getWorkerId() != null) {
+            worker = userService.findById(request.getWorkerId());
         }
 
-        inquiry.update(title, type, status, worker, workDate, method, description, solution, requester);
+        inquiry.update(
+                request.getTitle(),
+                request.getType(),
+                request.getStatus(),
+                worker,
+                request.getWorkDate(),
+                request.getMethod(),
+                request.getDescription(),
+                request.getSolution(),
+                request.getRequester()
+        );
 
-        log.info("민원 수정 완료 - ID: {}, Title: {}", id, title);
-        return inquiry;
-    }
-
-    /**
-     * 상태만 변경
-     */
-    @Transactional
-    public Inquiry updateStatus(Long id, InquiryStatus status) {
-        Inquiry inquiry = findById(id);
-        inquiry.updateStatus(status);
-
-        log.info("민원 상태 변경 - ID: {}, Status: {}", id, status);
-        return inquiry;
-    }
-
-    /**
-     * 작업자 배정
-     */
-    @Transactional
-    public Inquiry assignWorker(Long inquiryId, Long workerId, InquiryMethod method) {
-        Inquiry inquiry = findById(inquiryId);
-        User worker = userService.findById(workerId);
-
-        inquiry.assignWorker(worker, method);
-
-        log.info("작업자 배정 - InquiryId: {}, WorkerId: {}, Worker: {}, Method: {}",
-                inquiryId, workerId, worker.getName(), method);
-        return inquiry;
-    }
-
-    /**
-     * 작업 완료
-     */
-    @Transactional
-    public Inquiry complete(Long id, String solution) {
-        Inquiry inquiry = findById(id);
-        inquiry.complete(solution);
-
-        log.info("민원 완료 - ID: {}, Solution: {}", id, solution);
+        log.info("민원 수정 완료 - ID: {}, Title: {}", id, request.getTitle());
         return inquiry;
     }
 

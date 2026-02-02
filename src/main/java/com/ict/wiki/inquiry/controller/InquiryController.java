@@ -40,18 +40,10 @@ public class InquiryController {
      */
     @PostMapping
     public ResponseEntity<InquiryResponse> createInquiry(
-            @Valid @RequestBody InquiryCreateRequest request,
+            @Valid @RequestBody InquirySaveRequest request,  // ← DTO 변경
             HttpSession session) {
 
-        // 로그인 확인 (선택적)
-        // User user = sessionUtil.getCurrentUser(session);
-
-        Inquiry inquiry = inquiryService.createInquiry(
-                request.getTitle(),
-                request.getType(),
-                request.getDescription(),
-                request.getRequester()
-        );
+        Inquiry inquiry = inquiryService.createInquiry(request);  // ← 파라미터 간소화
 
         return ResponseEntity.ok(InquiryResponse.from(inquiry));
     }
@@ -235,65 +227,10 @@ public class InquiryController {
     @PutMapping("/{id}")
     public ResponseEntity<InquiryResponse> updateInquiry(
             @PathVariable Long id,
-            @Valid @RequestBody InquiryUpdateRequest request) {
+            @Valid @RequestBody InquirySaveRequest request) {  // ← DTO 변경
 
-        Inquiry inquiry = inquiryService.update(
-                id,
-                request.getTitle(),
-                request.getType(),
-                request.getStatus(),
-                request.getWorkerId(),
-                request.getWorkDate(),
-                request.getMethod(),
-                request.getDescription(),
-                request.getSolution(),
-                request.getRequester()
-        );
+        Inquiry inquiry = inquiryService.update(id, request);  // ← 파라미터 간소화
 
-        return ResponseEntity.ok(InquiryResponse.from(inquiry));
-    }
-
-    /**
-     * 상태만 변경
-     * PATCH /api/inquiries/{id}/status
-     */
-    @PatchMapping("/{id}/status")
-    public ResponseEntity<InquiryResponse> updateStatus(
-            @PathVariable Long id,
-            @Valid @RequestBody UpdateStatusRequest request) {
-
-        Inquiry inquiry = inquiryService.updateStatus(id, request.getStatus());
-        return ResponseEntity.ok(InquiryResponse.from(inquiry));
-    }
-
-    /**
-     * 작업자 배정
-     * POST /api/inquiries/{id}/assign
-     */
-    @PostMapping("/{id}/assign")
-    public ResponseEntity<InquiryResponse> assignWorker(
-            @PathVariable Long id,
-            @Valid @RequestBody AssignWorkerRequest request) {
-
-        Inquiry inquiry = inquiryService.assignWorker(
-                id,
-                request.getWorkerId(),
-                request.getMethod()
-        );
-
-        return ResponseEntity.ok(InquiryResponse.from(inquiry));
-    }
-
-    /**
-     * 민원 완료
-     * POST /api/inquiries/{id}/complete
-     */
-    @PostMapping("/{id}/complete")
-    public ResponseEntity<InquiryResponse> completeInquiry(
-            @PathVariable Long id,
-            @Valid @RequestBody CompleteInquiryRequest request) {
-
-        Inquiry inquiry = inquiryService.complete(id, request.getSolution());
         return ResponseEntity.ok(InquiryResponse.from(inquiry));
     }
 
