@@ -25,13 +25,9 @@ public class SignupRequest {
             message = "이름은 한글, 영문만 사용 가능하며 2-30자여야 합니다")
     private String name;
 
-    @Pattern(regexp = "^[0-9]{8,12}$",
-            message = "학번은 8-12자리 숫자만 가능합니다")
-    private String studentId;
-
-    @Pattern(regexp = "^[가-힣a-zA-Z\\s()]{2,50}$",
-            message = "학과명은 한글, 영문만 사용 가능하며 2-50자여야 합니다")
-    private String department;
+    @Pattern(regexp = "^01[0-9][0-9]{7,8}$",
+            message = "올바른 핸드폰 번호 형식이 아닙니다 (예: 01012345678)")
+    private String phoneNumber;
 
     // 전체 이메일 생성
     public String getFullEmail() {

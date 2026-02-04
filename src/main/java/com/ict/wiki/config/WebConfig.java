@@ -34,6 +34,7 @@ public class WebConfig implements WebMvcConfigurer {
         // 허용할 Origin
         config.setAllowedOrigins(Arrays.asList(
                 "http://localhost:5173",
+                "http://localhost:4173",
                 "http://127.0.0.1:5173"
         ));
 

@@ -27,9 +27,7 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private String name;
 
-    private String studentId; // 학번
-
-    private String department; // 학과
+    private String phoneNumber; // 핸드폰 번호
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -60,5 +58,10 @@ public class User extends BaseEntity {
     //사용자 권한 변경
     public void updateRole(Role newRole) {
         this.role = newRole;
+    }
+
+    //핸드폰 번호 업데이트
+    public void updatePhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
     }
 }

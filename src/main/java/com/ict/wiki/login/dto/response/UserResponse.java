@@ -11,8 +11,7 @@ public class UserResponse {
     private Long userId;
     private String name;
     private String email;
-    private String studentId;
-    private String department;
+    private String phoneNumber;
     private Role role;
 
     // User 엔티티에서 DTO 생성
@@ -21,8 +20,7 @@ public class UserResponse {
                 user.getId(),
                 user.getName(),
                 user.getEmail(),
-                user.getStudentId(),
-                user.getDepartment(),
+                user.getPhoneNumber(),
                 user.getRole()
         );
     }
