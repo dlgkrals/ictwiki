@@ -18,4 +18,7 @@ public class DocumentCreateRequest {
 
     @NotBlank(message = "내용을 입력하세요")
     private String content;
+
+    @NotBlank(message = "카테고리를 선택하세요")
+    private String categoryCode;
 }

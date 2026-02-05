@@ -41,6 +41,13 @@ public class Document extends BaseEntity {
     private String content;
 
     /**
+     * 문서 카테고리
+     */
+    @Column(nullable = false, length = 50)
+    @Enumerated(EnumType.STRING)
+    private DocumentCategory category;
+
+    /**
      * 작성자
      */
     @ManyToOne(fetch = FetchType.LAZY)
@@ -80,9 +87,10 @@ public class Document extends BaseEntity {
     /**
      * 문서 수정
      */
-    public void update(String title, String content, User editor) {
+    public void update(String title, String content, DocumentCategory category, User editor) {
         this.title = title;
         this.content = content;
+        this.category = category;
         this.lastEditor = editor;
         this.version++;
     }

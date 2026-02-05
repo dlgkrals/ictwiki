@@ -19,6 +19,9 @@ public class DocumentUpdateRequest {
     @NotBlank(message = "내용을 입력하세요")
     private String content;
 
+    @NotBlank(message = "카테고리를 선택하세요")
+    private String categoryCode;
+
     @Size(max = 500, message = "수정 사유는 500자 이하여야 합니다")
     private String editReason;
 }

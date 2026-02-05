@@ -22,6 +22,10 @@ public class DocumentResponse {
     private Integer version;
     private Boolean deleted;
 
+    // 카테고리 정보
+    private String categoryCode;
+    private String categoryName;
+
     // 작성자 정보
     private Long authorId;
     private String authorName;
@@ -46,6 +50,8 @@ public class DocumentResponse {
                 .viewCount(document.getViewCount())
                 .version(document.getVersion())
                 .deleted(document.getDeleted())
+                .categoryCode(document.getCategory().name())           // ← 카테고리 코드
+                .categoryName(document.getCategory().getDisplayName()) // ← 카테고리 디스플레이 네임
                 .authorId(document.getAuthor().getId())
                 .authorName(document.getAuthor().getName())
                 .authorEmail(document.getAuthor().getEmail())

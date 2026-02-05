@@ -1,6 +1,7 @@
 package com.ict.wiki.document.repository;
 
 import com.ict.wiki.document.domain.Document;
+import com.ict.wiki.document.domain.DocumentCategory;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -83,6 +84,15 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
      */
     @Query("SELECT d FROM Document d JOIN FETCH d.author WHERE d.deleted = true ORDER BY d.modifiedAt DESC")
     List<Document> findAllDeleted();
+
+    /**
+     * 카테고리별 문서 조회 (삭제되지 않은 것만)
+     */
+    @Query("SELECT d FROM Document d " +
+            "JOIN FETCH d.author " +
+            "WHERE d.category = :category AND d.deleted = false " +
+            "ORDER BY d.createdAt DESC")
+    List<Document> findByCategory(@Param("category") DocumentCategory category);
 
     /**
      * 단건 조회

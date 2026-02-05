@@ -21,6 +21,10 @@ public class DocumentSummaryResponse {
     private Long viewCount;
     private Integer version;
 
+    // 카테고리 정보
+    private String categoryCode;
+    private String categoryName;
+
     private String authorName;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -34,6 +38,8 @@ public class DocumentSummaryResponse {
                 .title(document.getTitle())
                 .viewCount(document.getViewCount())
                 .version(document.getVersion())
+                .categoryCode(document.getCategory().name())           // ← 추가
+                .categoryName(document.getCategory().getDisplayName()) // ← 추가
                 .authorName(document.getAuthor().getName())
                 .createdAt(document.getCreatedAt())
                 .updatedAt(document.getModifiedAt())

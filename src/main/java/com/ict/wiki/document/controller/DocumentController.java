@@ -1,8 +1,10 @@
 package com.ict.wiki.document.controller;
 
 import com.ict.wiki.document.domain.Document;
+import com.ict.wiki.document.domain.DocumentCategory;
 import com.ict.wiki.document.dto.request.DocumentCreateRequest;
 import com.ict.wiki.document.dto.request.DocumentUpdateRequest;
+import com.ict.wiki.document.dto.response.DocumentCategoryResponse;
 import com.ict.wiki.document.dto.response.DocumentResponse;
 import com.ict.wiki.document.dto.response.DocumentSummaryResponse;
 import com.ict.wiki.document.service.DocumentService;
@@ -15,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -32,6 +35,23 @@ public class DocumentController {
     private final SessionUtil sessionUtil;
 
     /**
+     * 카테고리 목록 조회
+     * GET /api/documents/categories
+     */
+    @GetMapping("/categories")
+    public ResponseEntity<List<DocumentCategoryResponse>> getAllCategories() {
+        List<DocumentCategoryResponse> categories = Arrays.stream(DocumentCategory.values())
+                .map(category -> new DocumentCategoryResponse(
+                        category.name(),              // code: "WORK"
+                        category.getDisplayName(),    // displayName: "업무"
+                        category.getDescription()     // description: "업무 관련 문서"
+                ))
+                .toList();
+
+        return ResponseEntity.ok(categories);
+    }
+
+    /**
      * 문서 생성
      * POST /api/documents
      */
@@ -45,6 +65,7 @@ public class DocumentController {
         Document document = documentService.createDocument(
                 request.getTitle(),
                 request.getContent(),
+                request.getCategoryCode(),
                 user
         );
 
@@ -81,6 +102,23 @@ public class DocumentController {
         List<DocumentSummaryResponse> response = documents.stream()
                 .map(DocumentSummaryResponse::from)
                 .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 카테고리별 문서 조회
+     * GET /api/documents/category/{categoryCode}
+     */
+    @GetMapping("/category/{categoryCode}")
+    public ResponseEntity<List<DocumentSummaryResponse>> getDocumentsByCategory(
+            @PathVariable String categoryCode) {
+
+        DocumentCategory category = DocumentCategory.fromCode(categoryCode);
+        List<Document> documents = documentService.getDocumentsByCategory(category);
+        List<DocumentSummaryResponse> response = documents.stream()
+                .map(DocumentSummaryResponse::from)
+                .collect(Collectors.toList());
+
         return ResponseEntity.ok(response);
     }
 
@@ -174,6 +212,7 @@ public class DocumentController {
                 id,
                 request.getTitle(),
                 request.getContent(),
+                request.getCategoryCode(),  // ← 추가
                 user,
                 request.getEditReason()
         );

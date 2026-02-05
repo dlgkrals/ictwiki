@@ -1,6 +1,7 @@
 package com.ict.wiki.document.service;
 
 import com.ict.wiki.document.domain.Document;
+import com.ict.wiki.document.domain.DocumentCategory;
 import com.ict.wiki.document.events.DocumentCreatedEvent;
 import com.ict.wiki.document.events.DocumentDeletedEvent;
 import com.ict.wiki.document.events.DocumentUpdatedEvent;
@@ -32,16 +33,20 @@ public class DocumentService {
      * 문서 생성
      */
     @Transactional
-    public Document createDocument(String title, String content, User author) {
+    public Document createDocument(String title, String content, String categoryCode, User author) {
         // 제목 중복 체크
         if (documentRepository.existsByTitle(title)) {
             throw new IllegalArgumentException("이미 존재하는 제목입니다: " + title);
         }
 
+        // 카테고리 코드로부터 Enum 찾기
+        DocumentCategory category = DocumentCategory.fromCode(categoryCode);  // ← 추가
+
         // 문서 생성
         Document document = Document.builder()
                 .title(title)
                 .content(content)
+                .category(category)
                 .author(author)
                 .build();
 
@@ -108,7 +113,8 @@ public class DocumentService {
      * 문서 수정
      */
     @Transactional
-    public Document updateDocument(Long id, String title, String content, User editor, String editReason) {
+    public Document updateDocument(Long id, String title, String content, String categoryCode,
+                                   User editor, String editReason) {
         Document document = getDocument(id);
 
         // 삭제된 문서는 수정 불가
@@ -121,13 +127,15 @@ public class DocumentService {
             throw new IllegalArgumentException("이미 존재하는 제목입니다: " + title);
         }
 
+        DocumentCategory category = DocumentCategory.fromCode(categoryCode);
+
         // 수정 전 상태 저장 (이벤트용)
         String oldTitle = document.getTitle();
         String oldContent = document.getContent();
         Integer oldVersion = document.getVersion();
 
         // 문서 수정
-        document.update(title, content, editor);
+        document.update(title, content, category, editor);
         Document updatedDocument = documentRepository.save(document);
 
         log.info("문서 수정 완료 - ID: {}, Title: {}, Editor: {}, Version: {}",
@@ -205,6 +213,13 @@ public class DocumentService {
      */
     public List<Document> getAllDocuments() {
         return documentRepository.findAllNotDeleted();
+    }
+
+    /**
+     * 카테고리별 문서 조회
+     */
+    public List<Document> getDocumentsByCategory(DocumentCategory category) {
+        return documentRepository.findByCategory(category);
     }
 
     /**
