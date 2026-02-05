@@ -62,6 +62,9 @@ public class SessionAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
+        // 세션 갱신 (매 요청마다 타임아웃 리셋)
+        session.setMaxInactiveInterval(30 * 60);
+
         Long userId = (Long) session.getAttribute(SESSION_USER_KEY);
         log.debug("인증 성공 - UserId: {}, URI: {}", userId, requestURI);
 
