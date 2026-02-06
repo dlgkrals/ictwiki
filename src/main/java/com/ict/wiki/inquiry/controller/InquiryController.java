@@ -84,11 +84,11 @@ public class InquiryController {
      * GET /api/inquiries
      */
     @GetMapping
-    public ResponseEntity<List<InquirySummaryResponse>> getAllInquiries() {
+    public ResponseEntity<List<InquiryResponse>> getAllInquiries() {
         List<Inquiry> inquiries = inquiryService.findAll();
 
-        List<InquirySummaryResponse> response = inquiries.stream()
-                .map(InquirySummaryResponse::from)
+        List<InquiryResponse> response = inquiries.stream()
+                .map(InquiryResponse::from)
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(response);
