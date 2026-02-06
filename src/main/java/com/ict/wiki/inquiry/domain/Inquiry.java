@@ -91,6 +91,19 @@ public class Inquiry extends BaseEntity {
     @Column(nullable = false, length = 100)
     private String requester;
 
+    /**
+     * 건물
+     */
+    @Column(length = 50)
+    @Enumerated(EnumType.STRING)
+    private Building building;
+
+    /**
+     * 호실 (숫자만)
+     */
+    @Column
+    private Integer roomNumber;
+
     // ========== 비즈니스 메서드 ==========
 
     /**
@@ -98,7 +111,8 @@ public class Inquiry extends BaseEntity {
      */
     public void update(String title, InquiryType type, InquiryStatus status,
                        User worker, LocalDate workDate, InquiryMethod method,
-                       String description, String solution, String requester) {
+                       String description, String solution, String requester,
+                       Building building, Integer roomNumber) {
         this.title = title;
         this.type = type;
         this.status = status;
@@ -108,6 +122,8 @@ public class Inquiry extends BaseEntity {
         this.description = description;
         this.solution = solution;
         this.requester = requester;
+        this.building = building;
+        this.roomNumber = roomNumber;
     }
 
     /**

@@ -35,11 +35,19 @@ public class InquiryService {
      */
     @Transactional
     public Inquiry createInquiry(InquirySaveRequest request) {
+        // 건물 코드 변환 (있으면)
+        Building building = null;
+        if (request.getBuildingCode() != null && !request.getBuildingCode().isBlank()) {
+            building = Building.fromCode(request.getBuildingCode());
+        }
+
         Inquiry inquiry = Inquiry.builder()
                 .title(request.getTitle())
                 .type(request.getType())
                 .description(request.getDescription())
                 .requester(request.getRequester())
+                .building(building)
+                .roomNumber(request.getRoomNumber())
                 .status(request.getStatus() != null ? request.getStatus() : InquiryStatus.PENDING)
                 .workDate(request.getWorkDate())
                 .solution(request.getSolution())
@@ -149,22 +157,29 @@ public class InquiryService {
     public Inquiry update(Long id, InquirySaveRequest request) {
         Inquiry inquiry = findById(id);
 
-        // 작업자 처리
         User worker = null;
         if (request.getWorkerId() != null) {
             worker = userService.findById(request.getWorkerId());
         }
 
+        // 건물 코드 변환 (있으면)
+        Building building = null;
+        if (request.getBuildingCode() != null && !request.getBuildingCode().isBlank()) {
+            building = Building.fromCode(request.getBuildingCode());
+        }
+
         inquiry.update(
                 request.getTitle(),
                 request.getType(),
-                request.getStatus(),
+                request.getStatus() != null ? request.getStatus() : InquiryStatus.PENDING,
                 worker,
                 request.getWorkDate(),
                 request.getMethod(),
                 request.getDescription(),
                 request.getSolution(),
-                request.getRequester()
+                request.getRequester(),
+                building,                    // ← 추가
+                request.getRoomNumber()      // ← 추가
         );
 
         log.info("민원 수정 완료 - ID: {}, Title: {}", id, request.getTitle());

@@ -1,9 +1,11 @@
 package com.ict.wiki.inquiry.controller;
 
+import com.ict.wiki.inquiry.domain.Building;
 import com.ict.wiki.inquiry.domain.Inquiry;
 import com.ict.wiki.inquiry.domain.InquiryStatus;
 import com.ict.wiki.inquiry.domain.InquiryType;
 import com.ict.wiki.inquiry.dto.request.*;
+import com.ict.wiki.inquiry.dto.response.BuildingResponse;
 import com.ict.wiki.inquiry.dto.response.InquiryResponse;
 import com.ict.wiki.inquiry.dto.response.InquirySummaryResponse;
 import com.ict.wiki.inquiry.service.InquiryService;
@@ -16,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -33,6 +36,22 @@ public class InquiryController {
     private final SessionUtil sessionUtil;
 
     // ========== 생성 ==========
+
+    /**
+     * 건물 목록 조회
+     * GET /api/inquiries/buildings
+     */
+    @GetMapping("/buildings")
+    public ResponseEntity<List<BuildingResponse>> getAllBuildings() {
+        List<BuildingResponse> buildings = Arrays.stream(Building.values())
+                .map(building -> new BuildingResponse(
+                        building.name(),            // code: "HEUNGHAK"
+                        building.getDisplayName()   // displayName: "흥학관"
+                ))
+                .toList();
+
+        return ResponseEntity.ok(buildings);
+    }
 
     /**
      * 민원 생성

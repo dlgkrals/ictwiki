@@ -30,6 +30,11 @@ public class InquirySummaryResponse {
     // 요청자
     private String requester;
 
+    // 건물 및 호실 정보
+    private String buildingCode;
+    private String buildingName;
+    private String formattedRoom;
+
     // 시간 정보
     private LocalDateTime createdAt;
 
@@ -47,6 +52,9 @@ public class InquirySummaryResponse {
                 .workDate(inquiry.getWorkDate())
                 .method(inquiry.getMethod())
                 .requester(inquiry.getRequester())
+                .buildingCode(inquiry.getBuilding() != null ? inquiry.getBuilding().name() : null)
+                .buildingName(inquiry.getBuilding() != null ? inquiry.getBuilding().getDisplayName() : null)
+                .formattedRoom(inquiry.getRoomNumber() != null ? inquiry.getRoomNumber() + " 호" : null)
                 .createdAt(inquiry.getCreatedAt())
                 .build();
     }
