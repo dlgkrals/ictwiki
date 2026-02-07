@@ -4,7 +4,9 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.ict.wiki.login.domain.Role;
 import com.ict.wiki.login.domain.User;
+import com.ict.wiki.login.dto.request.UserUpdateRequest;
 import com.ict.wiki.login.repository.UserRepository;
+import com.ict.wiki.util.PhoneNumberUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -79,6 +81,34 @@ public class UserService {
             clearStaffCache();
         }
 
+    }
+
+    /**
+     * 사용자 정보 수정 (이름, 전화번호)
+     *
+     * @param userId 사용자 ID
+     * @param request 수정 요청
+     * @return 수정된 사용자
+     */
+    @Transactional
+    public User updateUserInfo(Long userId, UserUpdateRequest request) {
+        User user = findById(userId);
+
+        // 이름 수정
+        if (request.getName() != null && !request.getName().isEmpty()) {
+            user.updateName(request.getName());
+        }
+
+        // 전화번호 수정
+        if (request.getPhoneNumber() != null && !request.getPhoneNumber().isEmpty()) {
+            String normalizedPhone = PhoneNumberUtil.normalize(request.getPhoneNumber());
+            user.updatePhoneNumber(normalizedPhone);
+        }
+
+        User updatedUser = userRepository.save(user);
+        log.info("사용자 정보 수정 완료 - UserId: {}, Name: {}", userId, request.getName());
+
+        return updatedUser;
     }
 
     /**

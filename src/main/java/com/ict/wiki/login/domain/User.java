@@ -60,6 +60,11 @@ public class User extends BaseEntity {
         this.role = newRole;
     }
 
+    //이름 업데이트
+    public void updateName(String name) {
+        this.name = name;
+    }
+
     //핸드폰 번호 업데이트
     public void updatePhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;

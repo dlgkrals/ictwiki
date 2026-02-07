@@ -5,6 +5,7 @@ import com.ict.wiki.login.domain.User;
 import com.ict.wiki.login.dto.request.LoginRequest;
 import com.ict.wiki.login.dto.request.SignupRequest;
 import com.ict.wiki.util.PasswordUtil;
+import com.ict.wiki.util.PhoneNumberUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -35,7 +36,7 @@ public class AuthService {
             throw new IllegalArgumentException("이미 존재하는 이메일입니다");
         }
 
-        String normalizedPhone = normalizePhoneNumber(request.getPhoneNumber());
+        String normalizedPhone = PhoneNumberUtil.normalize(request.getPhoneNumber());
 
         // 사용자 생성
         User user = User.builder()
@@ -180,16 +181,5 @@ public class AuthService {
         userService.updatePassword(user, encodedPassword);  // ✅ 변경
 
         log.info("비밀번호 변경 완료 - UserId: {}, Email: {}", userId, user.getEmail());
-    }
-
-    /**
-     * 전화번호 정규화 (숫자만 추출)
-     * 010-1234-5678 → 01012345678
-     */
-    private String normalizePhoneNumber(String phoneNumber) {
-        if (phoneNumber == null || phoneNumber.isEmpty()) {
-            return null;
-        }
-        return phoneNumber.replaceAll("[^0-9]", "");
     }
 }
