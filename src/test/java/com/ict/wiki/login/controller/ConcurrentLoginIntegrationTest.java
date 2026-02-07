@@ -26,10 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * 동시 로그인 방지 통합 테스트 (단순화)
- *
- * Note: MockMvc 환경에서는 실제 HTTP 세션 쿠키와 SessionRepository 연동에 제한이 있습니다.
- * 세션 관리 로직의 상세한 테스트는 SessionManagementServiceTest(단위 테스트)에서 수행됩니다.
+ * 동시 로그인 방지 통합 테스트
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -55,11 +52,9 @@ class ConcurrentLoginIntegrationTest {
     void setUp() {
         // 테스트 사용자 생성
         User testUser = User.builder()
-                .email("test@g.seoil.ac.kr")
+                .email("test@example.com")
                 .password(PasswordUtil.encode("Test123!@#"))
                 .name("테스트")
-                .studentId("12345678")
-                .department("컴퓨터공학과")
                 .role(Role.STUDENT)
                 .active(true)
                 .lastVerifiedDate(LocalDate.now())
@@ -68,7 +63,7 @@ class ConcurrentLoginIntegrationTest {
 
         // 로그인 요청 DTO
         loginRequest = new LoginRequest();
-        loginRequest.setEmailPrefix("test");
+        loginRequest.setEmail("test@example.com");
         loginRequest.setPassword("Test123!@#");
 
         // 세션 관리 초기화
@@ -84,11 +79,11 @@ class ConcurrentLoginIntegrationTest {
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.user.email").value("test@g.seoil.ac.kr"))
+                .andExpect(jsonPath("$.user.email").value("test@example.com"))
                 .andExpect(jsonPath("$.csrfToken").exists());
 
         // then - 세션이 관리 서비스에 등록되었는지 확인
-        assertThat(sessionManagementService.isLoggedIn("test@g.seoil.ac.kr")).isTrue();
+        assertThat(sessionManagementService.isLoggedIn("test@example.com")).isTrue();
         assertThat(sessionManagementService.getActiveSessionCount()).isEqualTo(1);
     }
 
@@ -102,7 +97,7 @@ class ConcurrentLoginIntegrationTest {
                 .andExpect(status().isOk());
 
         assertThat(sessionManagementService.getActiveSessionCount()).isEqualTo(1);
-        String firstSessionId = sessionManagementService.getActiveSession("test@g.seoil.ac.kr");
+        String firstSessionId = sessionManagementService.getActiveSession("test@example.com");
 
         // when - 두 번째 로그인
         mockMvc.perform(post("/api/auth/login")
@@ -114,7 +109,7 @@ class ConcurrentLoginIntegrationTest {
         assertThat(sessionManagementService.getActiveSessionCount()).isEqualTo(1);
 
         // 새 세션 ID로 교체되었는지 확인
-        String secondSessionId = sessionManagementService.getActiveSession("test@g.seoil.ac.kr");
+        String secondSessionId = sessionManagementService.getActiveSession("test@example.com");
         assertThat(secondSessionId).isNotEqualTo(firstSessionId);
     }
 
@@ -123,11 +118,9 @@ class ConcurrentLoginIntegrationTest {
     void multipleUsers_ConcurrentLogin() throws Exception {
         // given - 추가 사용자 생성
         User user2 = User.builder()
-                .email("test2@g.seoil.ac.kr")
+                .email("test2@example.com")
                 .password(PasswordUtil.encode("Test123!@#"))
                 .name("테스트2")
-                .studentId("87654321")
-                .department("컴퓨터공학과")
                 .role(Role.STUDENT)
                 .active(true)
                 .lastVerifiedDate(LocalDate.now())
@@ -135,7 +128,7 @@ class ConcurrentLoginIntegrationTest {
         userRepository.save(user2);
 
         LoginRequest loginRequest2 = new LoginRequest();
-        loginRequest2.setEmailPrefix("test2");
+        loginRequest2.setEmail("test2@example.com");
         loginRequest2.setPassword("Test123!@#");
 
         // when - 두 사용자 로그인
@@ -151,8 +144,8 @@ class ConcurrentLoginIntegrationTest {
 
         // then - 각 사용자마다 세션 1개씩
         assertThat(sessionManagementService.getActiveSessionCount()).isEqualTo(2);
-        assertThat(sessionManagementService.isLoggedIn("test@g.seoil.ac.kr")).isTrue();
-        assertThat(sessionManagementService.isLoggedIn("test2@g.seoil.ac.kr")).isTrue();
+        assertThat(sessionManagementService.isLoggedIn("test@example.com")).isTrue();
+        assertThat(sessionManagementService.isLoggedIn("test2@example.com")).isTrue();
     }
 
     @Test
@@ -168,6 +161,6 @@ class ConcurrentLoginIntegrationTest {
 
         // then - 세션 1개만 유지
         assertThat(sessionManagementService.getActiveSessionCount()).isEqualTo(1);
-        assertThat(sessionManagementService.isLoggedIn("test@g.seoil.ac.kr")).isTrue();
+        assertThat(sessionManagementService.isLoggedIn("test@example.com")).isTrue();
     }
 }

@@ -47,10 +47,9 @@ public class AuthController {
     public ResponseEntity<Map<String, String>> signup(@Valid @RequestBody SignupRequest request) {
         authService.signup(request);
 
-        // ⭐ 응답 메시지 변경
         return ResponseEntity.ok(Map.of(
                 "message", "회원가입이 완료되었습니다. 이메일을 확인하여 인증을 완료해주세요.",
-                "email", request.getFullEmail()
+                "email", request.getEmail()  // ← 변경: getFullEmail() → getEmail()
         ));
     }
 
@@ -69,16 +68,15 @@ public class AuthController {
 
     /**
      * ⭐ 인증 메일 재발송
-     * POST /api/auth/resend-verification?emailPrefix=student
+     * POST /api/auth/resend-verification?email=student@gmail.com
      */
     @PostMapping("/resend-verification")
-    public ResponseEntity<Map<String, String>> resendVerificationEmail(@RequestParam String emailPrefix) {
-        String fullEmail = emailPrefix + "@g.seoil.ac.kr";
-        emailVerificationService.resendVerificationEmail(fullEmail);
+    public ResponseEntity<Map<String, String>> resendVerificationEmail(@RequestParam String email) {  // ← 변경
+        emailVerificationService.resendVerificationEmail(email);
 
         return ResponseEntity.ok(Map.of(
                 "message", "인증 메일이 재발송되었습니다.",
-                "email", fullEmail
+                "email", email  // ← 변경
         ));
     }
 
@@ -147,10 +145,11 @@ public class AuthController {
 
     /**
      * 이메일 중복 체크
+     * GET /api/auth/check-email?email=student@gmail.com
      */
     @GetMapping("/check-email")
-    public ResponseEntity<Boolean> checkEmail(@RequestParam String emailPrefix) {
-        boolean isDuplicate = authService.checkEmailDuplicate(emailPrefix);
+    public ResponseEntity<Boolean> checkEmail(@RequestParam String email) {  // ← 변경
+        boolean isDuplicate = authService.checkEmailDuplicate(email);
         return ResponseEntity.ok(isDuplicate);
     }
 
@@ -165,16 +164,15 @@ public class AuthController {
 
     /**
      * 비밀번호 재설정 이메일 발송
-     * POST /api/auth/forgot-password?emailPrefix=student
+     * POST /api/auth/forgot-password?email=student@gmail.com
      */
     @PostMapping("/forgot-password")
-    public ResponseEntity<Map<String, String>> forgotPassword(@RequestParam String emailPrefix) {
-        String fullEmail = emailPrefix + "@g.seoil.ac.kr";
-        passwordResetService.sendPasswordResetEmail(fullEmail);
+    public ResponseEntity<Map<String, String>> forgotPassword(@RequestParam String email) {  // ← 변경
+        passwordResetService.sendPasswordResetEmail(email);
 
         return ResponseEntity.ok(Map.of(
-                "message", "비밀번호 재설정 메일이 발송되었습니다. 이메일을 확인해주세요.",
-                "email", fullEmail
+                "message", "비밀번호 재설정 메일이 발송되었습니다.",
+                "email", email  // ← 변경
         ));
     }
 
