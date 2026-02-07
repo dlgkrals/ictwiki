@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -108,4 +110,91 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
      */
     @Query("SELECT i.worker.name, COUNT(i) FROM Inquiry i WHERE i.status = 'COMPLETED' AND i.worker IS NOT NULL GROUP BY i.worker.name ORDER BY COUNT(i) DESC")
     List<Object[]> countCompletedByWorker();
+
+
+
+
+
+
+
+    // ========== 시간별 통계 ==========
+
+    /**
+     * 특정 날짜의 민원 건수
+     */
+    @Query("SELECT COUNT(i) FROM Inquiry i WHERE FUNCTION('DATE', i.createdAt) = :date")
+    long countByDate(@Param("date") LocalDate date);
+
+    /**
+     * 특정 월의 민원 건수
+     */
+    @Query("SELECT COUNT(i) FROM Inquiry i " +
+            "WHERE FUNCTION('YEAR', i.createdAt) = :year " +
+            "AND FUNCTION('MONTH', i.createdAt) = :month")
+    long countByYearAndMonth(@Param("year") int year, @Param("month") int month);
+
+    /**
+     * 특정 연도의 민원 건수
+     */
+    @Query("SELECT COUNT(i) FROM Inquiry i WHERE FUNCTION('YEAR', i.createdAt) = :year")
+    long countByYear(@Param("year") int year);
+
+    /**
+     * 일별 민원 건수 (기간 내)
+     */
+    @Query("SELECT FUNCTION('DATE', i.createdAt), COUNT(i) " +
+            "FROM Inquiry i " +
+            "WHERE i.createdAt BETWEEN :startDate AND :endDate " +
+            "GROUP BY FUNCTION('DATE', i.createdAt) " +
+            "ORDER BY FUNCTION('DATE', i.createdAt)")
+    List<Object[]> countByDateRange(@Param("startDate") LocalDateTime startDate,
+                                    @Param("endDate") LocalDateTime endDate);
+
+    /**
+     * 월별 민원 건수 (특정 연도)
+     */
+    @Query("SELECT FUNCTION('MONTH', i.createdAt), COUNT(i) " +
+            "FROM Inquiry i " +
+            "WHERE FUNCTION('YEAR', i.createdAt) = :year " +
+            "GROUP BY FUNCTION('MONTH', i.createdAt) " +
+            "ORDER BY FUNCTION('MONTH', i.createdAt)")
+    List<Object[]> countByMonthsInYear(@Param("year") int year);
+
+    // ========== 처리방식별 통계 ==========
+
+    /**
+     * 처리방식별 민원 건수
+     */
+    @Query("SELECT i.method, COUNT(i) FROM Inquiry i WHERE i.method IS NOT NULL GROUP BY i.method")
+    List<Object[]> countByMethod();
+
+    // ========== 건물별 통계 ==========
+
+    /**
+     * 건물별 민원 건수
+     */
+    @Query("SELECT i.building, COUNT(i) FROM Inquiry i WHERE i.building IS NOT NULL GROUP BY i.building ORDER BY COUNT(i) DESC")
+    List<Object[]> countByBuilding();
+
+    // ========== 평균 통계 ==========
+
+    /**
+     * 완료된 민원의 평균 처리 시간 (일)
+     */
+    @Query("SELECT AVG(DATEDIFF(i.workDate, FUNCTION('DATE', i.createdAt))) " +
+            "FROM Inquiry i " +
+            "WHERE i.status = 'COMPLETED' AND i.workDate IS NOT NULL")
+    Double getAvgProcessingDays();
+
+    /**
+     * 전체 민원 수
+     */
+    @Query("SELECT COUNT(i) FROM Inquiry i")
+    long countAll();
+
+    /**
+     * 가장 오래된 민원의 생성 날짜
+     */
+    @Query("SELECT MIN(i.createdAt) FROM Inquiry i")
+    LocalDateTime findOldestCreatedAt();
 }
