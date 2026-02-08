@@ -50,12 +50,18 @@ jobs:
           script: |
             set +e
             echo "🛑 기존 프로세스 종료"
-            pkill -f wiki-0.0.1-SNAPSHOT.jar
+            # 프로세스가 있으면 SIGTERM 보내고, 없어도 에러 무시
+            pgrep -f wiki-0.0.1-SNAPSHOT.jar | xargs -r kill || true
+            # 또는 더 강하게 종료하고 싶을 때 (필요 시 주석 해제)
+            # pgrep -f wiki-0.0.1-SNAPSHOT.jar | xargs -r kill -9 || true
+            
+            echo "⏳ 종료 대기 중..."
             sleep 3
             
             set -e
             echo "🚀 새 버전 실행"
             cd /home/ubuntu/ictwiki
+            
             nohup java -jar \
               -Dspring.profiles.active=prod \
               wiki-0.0.1-SNAPSHOT.jar \
@@ -70,6 +76,7 @@ jobs:
               exit 0
             else
               echo "❌ 배포 실패 - 로그 확인"
+              echo "최근 로그:"
               tail -20 app.log
               exit 1
             fi
