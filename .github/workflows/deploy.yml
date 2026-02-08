@@ -55,10 +55,12 @@ jobs:
             set -e
 
             APP_DIR=~/app
+            LIB_DIR=$APP_DIR/build/libs
             APP_NAME=app.jar
             PORT=8080
 
-            cd $APP_DIR
+            # 디렉토리 보장
+            mkdir -p $APP_DIR
 
             echo "🔹 Stop existing Spring Boot"
             PID=$(lsof -ti tcp:$PORT || true)
@@ -67,11 +69,13 @@ jobs:
               sleep 5
             fi
 
-            echo "🔹 Replace jar"
-            JAR_FILE=$(ls *.jar | head -n 1)
-            mv $JAR_FILE $APP_NAME
+            echo "🔹 Move jar"
+            cd $LIB_DIR
+            JAR_FILE=$(ls *-SNAPSHOT.jar | grep -v plain | head -n 1)
+            mv $JAR_FILE $APP_DIR/$APP_NAME
 
             echo "🔹 Start Spring Boot"
+            cd $APP_DIR
             nohup java -jar $APP_NAME \
               --spring.profiles.active=prod \
               > app.log 2>&1 &
