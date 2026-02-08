@@ -53,7 +53,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             echo "🛑 기존 프로세스 종료"
-            pkill -f wiki-0.0.1-SNAPSHOT.jar || echo "종료할 프로세스 없음"
+            pkill -f wiki-0.0.1-SNAPSHOT.jar || true
             sleep 3
             
             echo "🚀 새 버전 실행"
