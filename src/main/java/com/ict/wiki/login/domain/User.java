@@ -37,12 +37,24 @@ public class User extends BaseEntity {
     @Builder.Default
     private boolean active = false;
 
-    private LocalDate lastVerifiedDate; // 마지막 인증 날짜
+    /**
+     * 관리자 승인 여부
+     * - 회원가입 시 false
+     * - 관리자 승인 후 true
+     */
+    @Column(nullable = false)
+    private boolean approved = false;
 
     // 비밀번호 업데이트
     public void updatePassword(String encodedPassword) {
         this.password = encodedPassword;
     }
+
+    // 계정 활성화
+    public void activate() {
+        this.active = true;
+    }
+
 
     // 계정 비활성화
     public void deactivate() {
@@ -52,7 +64,6 @@ public class User extends BaseEntity {
     // 인증 완료 처리
     public void verify() {
         this.active = true;
-        this.lastVerifiedDate = LocalDate.now();
     }
 
     //사용자 권한 변경
@@ -68,5 +79,28 @@ public class User extends BaseEntity {
     //핸드폰 번호 업데이트
     public void updatePhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
+    }
+
+    /**
+     * 회원 승인
+     */
+    public void approve() {
+        this.approved = true;
+        this.active = true;
+    }
+
+    /**
+     * 회원 승인 거부
+     */
+    public void reject() {
+        this.approved = false;
+        this.active = false;
+    }
+
+    /**
+     * 관리자가 강제로 비밀번호 변경
+     */
+    public void changePasswordByAdmin(String newPassword) {
+        this.password = newPassword;
     }
 }

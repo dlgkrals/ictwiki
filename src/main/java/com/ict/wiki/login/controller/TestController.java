@@ -39,6 +39,6 @@ public class TestController {
      */
     @GetMapping("/public")
     public String publicEndpoint() {
-        return "누구나 접근 가능한 엔드포인트!!!";
+        return "누구나 접근 가능한 엔드포인트!!!!!!!!";
     }
 }

@@ -28,4 +28,29 @@ public interface UserRepository extends JpaRepository<User, Long> {
      */
     @Query("SELECT u FROM User u WHERE u.role = :role ORDER BY u.name")
     List<User> findByRole(@Param("role") Role role);
+
+    /**
+     * 승인 대기 회원 목록
+     */
+    List<User> findByApprovedFalse();
+
+    /**
+     * 승인된 회원 수
+     */
+    long countByApprovedTrue();
+
+    /**
+     * 승인 대기 회원 수
+     */
+    long countByApprovedFalse();
+
+    /**
+     * 활성 회원 수
+     */
+    long countByActiveTrue();
+
+    /**
+     * 역할별 회원 수
+     */
+    long countByRole(Role role);
 }

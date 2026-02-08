@@ -15,7 +15,7 @@ import java.lang.annotation.Target;
  * @GetMapping("/admin/users")
  * public ResponseEntity<?> getUsers() { ... }
  */
-@Target(ElementType.METHOD)
+@Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface RequireRole {
     Role[] value();  // 허용할 권한들
