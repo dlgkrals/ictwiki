@@ -47,4 +47,9 @@ jobs:
           script: |
             cd /home/ubuntu/app/build/libs
             sudo fuser -k 8080/tcp || true
-            nohup java -jar *.jar > app.log 2>&1 &
+            sleep 2
+            
+            JAR_FILE=$(ls -t wiki*.jar 2>/dev/null | grep -v plain | head -n 1)
+            
+            nohup java -jar "$JAR_FILE" > app.log 2>&1 &
+#            nohup java -jar *.jar > app.log 2>&1 &
