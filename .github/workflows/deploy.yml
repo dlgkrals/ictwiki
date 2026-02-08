@@ -58,82 +58,52 @@ jobs:
 
             echo ""
             echo "=== [DEBUG] 기존 프로세스 상태 확인 =============================="
-            echo "pgrep 결과 (전체):"
+            echo "pgrep -f wiki 결과 (상세):"
             pgrep -f wiki-0.0.1-SNAPSHOT.jar -a || echo "(없음)"
+
             echo ""
-            echo "ps aux | grep wiki 결과:"
-            ps aux | grep -i wiki | grep -v grep || echo "(매칭되는 프로세스 없음)"
+            echo "실제 java 프로세스만:"
+            ps aux | grep "[j]ava.*wiki-0.0.1-SNAPSHOT.jar" || echo "(없음)"
 
             set +e
             echo ""
             echo "=== [DEBUG] 프로세스 종료 시도 ==================================="
-            echo "kill 명령 실행 전:"
-            pgrep -f wiki-0.0.1-SNAPSHOT.jar | xargs -r echo "→ 종료 대상 PID:" || echo "(대상 없음)"
+            echo "종료 대상 (java 프로세스만):"
+            ps aux | grep "[j]ava.*wiki-0.0.1-SNAPSHOT.jar" | awk '{print $2}' | xargs -r echo "→ PID:"
 
-            pgrep -f wiki-0.0.1-SNAPSHOT.jar | xargs -r kill
-            KILL_EXIT=$?
-            echo "kill 명령 exit code: $KILL_EXIT"
-            if [ $KILL_EXIT -eq 0 ]; then
-              echo "→ kill 성공 (프로세스 종료됨)"
-            elif [ $KILL_EXIT -eq 123 ]; then
-              echo "→ xargs kill: 일부 프로세스만 종료됨"
-            else
-              echo "→ kill 관련 에러 발생 (또는 대상 없음)"
-            fi
+            # 진짜 종료 명령
+            ps aux | grep "[j]ava.*wiki-0.0.1-SNAPSHOT.jar" | awk '{print $2}' | xargs -r kill || true
+            echo "kill 후 exit code: $?"
 
             echo "종료 후 3초 대기"
             sleep 3
 
             echo ""
-            echo "=== [DEBUG] kill 후 프로세스 잔여 확인 ==========================="
-            pgrep -f wiki-0.0.1-SNAPSHOT.jar -a || echo "(남은 프로세스 없음)"
-            ps aux | grep -i wiki | grep -v grep || echo "(매칭 없음)"
+            echo "=== [DEBUG] kill 후 잔여 확인 ===================================="
+            ps aux | grep "[j]ava.*wiki-0.0.1-SNAPSHOT.jar" || echo "(없음)"
 
             set -e
 
             echo ""
-            echo "=== [DEBUG] 새 애플리케이션 시작 =================================="
-            cd /home/ubuntu/ictwiki || { echo "!!! cd 실패 !!!"; exit 2; }
-            echo "cd 후 현재 디렉토리: $(pwd)"
+            echo "=== [DEBUG] 새 버전 실행 ========================================="
+            cd /home/ubuntu/ictwiki || { echo "cd 실패"; exit 1; }
+            echo "현재 디렉토리: $(pwd)"
+            ls -l wiki-0.0.1-SNAPSHOT.jar || { echo "JAR 없음"; exit 1; }
 
-            echo "JAR 파일 확인:"
-            ls -l wiki-0.0.1-SNAPSHOT.jar || { echo "!!! JAR 파일 없음 !!!"; exit 3; }
-
-            echo "nohup java -jar 실행 시작"
             nohup java -jar \
               -Dspring.profiles.active=prod \
               wiki-0.0.1-SNAPSHOT.jar \
               > app.log 2>&1 &
-            JAVA_PID=$!
-            echo "백그라운드 PID: $JAVA_PID"
+            echo "실행 PID: $!"
 
-            echo "5초 대기"
             sleep 5
 
-            echo ""
-            echo "=== [DEBUG] 프로세스 실행 여부 최종 확인 ========================="
-            if ps -p "$JAVA_PID" > /dev/null 2>&1; then
-              echo "→ 방금 실행한 PID $JAVA_PID 는 살아있음"
-            else
-              echo "→ 방금 실행한 PID $JAVA_PID 는 이미 종료됨"
-            fi
-
-            if ps aux | grep -v grep | grep wiki-0.0.1-SNAPSHOT.jar > /dev/null; then
+            if ps aux | grep -v grep | grep "[j]ava.*wiki-0.0.1-SNAPSHOT.jar" > /dev/null; then
               echo "✅ 배포 성공!"
-              echo "최근 로그 15줄:"
-              tail -n 15 app.log || echo "(로그 파일 읽기 실패)"
+              tail -15 app.log
               exit 0
             else
               echo "❌ 배포 실패"
-              echo "app.log 최근 30줄:"
-              tail -n 30 app.log || echo "(로그 파일 없거나 읽기 실패)"
-              echo ""
-              echo "디스크 공간:"
-              df -h . || echo "(df 실패)"
-              echo ""
-              echo "JAR 파일 권한:"
-              ls -l wiki-0.0.1-SNAPSHOT.jar || echo "(ls 실패)"
+              tail -30 app.log
               exit 1
             fi
-
-            echo "=== [DEBUG] 스크립트 종료 ========================================="
