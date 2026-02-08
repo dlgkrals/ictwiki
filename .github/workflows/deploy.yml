@@ -32,7 +32,7 @@ jobs:
           ./gradlew clean build -x test
 
       - name: Copy JAR to EC2
-        uses: appleboy/scp-action@master
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
@@ -42,68 +42,45 @@ jobs:
           strip_components: 2
 
       - name: Deploy on EC2
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            set -x
-            echo "=== [DEBUG] SSH 세션 시작 ======================================="
-            echo "현재 디렉토리: $(/bin/pwd)"
-            echo "현재 사용자: $(whoami)"
-            echo "홈 디렉토리: $HOME"
-            echo "JAVA_HOME: ${JAVA_HOME:-없음}"
-            echo "PATH 일부: ${PATH:0:100}..."
+            cd /home/ubuntu/ictwiki
 
-            echo ""
-            echo "=== [DEBUG] 기존 프로세스 상태 확인 =============================="
-            echo "pgrep -f wiki 결과 (상세):"
-            pgrep -f wiki-0.0.1-SNAPSHOT.jar -a || echo "(없음)"
+            # 기존 프로세스 종료 (포트 기반 - 가장 추천)
+            sudo fuser -k -n tcp 8080 || true
+            # 필요하면 이름 기반으로도 병행 가능 (주석 해제)
+            # pkill -f wiki-0.0.1-SNAPSHOT.jar || true
 
-            echo ""
-            echo "실제 java 프로세스만:"
-            ps aux | grep "[j]ava.*wiki-0.0.1-SNAPSHOT.jar" || echo "(없음)"
-
-            set +e
-            echo ""
-            echo "=== [DEBUG] 프로세스 종료 시도 ==================================="
-            echo "종료 대상 (java 프로세스만):"
-            ps aux | grep "[j]ava.*wiki-0.0.1-SNAPSHOT.jar" | awk '{print $2}' | xargs -r echo "→ PID:"
-
-            # 진짜 종료 명령
-            ps aux | grep "[j]ava.*wiki-0.0.1-SNAPSHOT.jar" | awk '{print $2}' | xargs -r kill || true
-            echo "kill 후 exit code: $?"
-
-            echo "종료 후 3초 대기"
+            # 프로세스가 완전히 종료될 때까지 잠시 대기
             sleep 3
 
-            echo ""
-            echo "=== [DEBUG] kill 후 잔여 확인 ===================================="
-            ps aux | grep "[j]ava.*wiki-0.0.1-SNAPSHOT.jar" || echo "(없음)"
-
-            set -e
-
-            echo ""
-            echo "=== [DEBUG] 새 버전 실행 ========================================="
-            cd /home/ubuntu/ictwiki || { echo "cd 실패"; exit 1; }
-            echo "현재 디렉토리: $(pwd)"
-            ls -l wiki-0.0.1-SNAPSHOT.jar || { echo "JAR 없음"; exit 1; }
-
+            # 새 JAR 실행
             nohup java -jar \
               -Dspring.profiles.active=prod \
               wiki-0.0.1-SNAPSHOT.jar \
               > app.log 2>&1 &
-            echo "실행 PID: $!"
 
-            sleep 5
+            echo "새 프로세스 시작됨 (백그라운드)"
 
-            if ps aux | grep -v grep | grep "[j]ava.*wiki-0.0.1-SNAPSHOT.jar" > /dev/null; then
-              echo "✅ 배포 성공!"
-              tail -15 app.log
+            # 시작 후 충분히 기다림 (Spring Boot 초기화 시간 고려)
+            sleep 8
+
+            # 프로세스 실행 여부 확인
+            if pgrep -f "java.*wiki-0.0.1-SNAPSHOT.jar" > /dev/null; then
+              echo "✅ 배포 성공 - 프로세스 실행중"
+              echo "최근 로그:"
+              tail -n 10 app.log
               exit 0
             else
-              echo "❌ 배포 실패"
-              tail -30 app.log
+              echo "❌ 배포 실패 - 프로세스가 실행되지 않음"
+              echo "최근 로그:"
+              tail -n 30 app.log
+              echo ""
+              echo "디스크 공간 확인:"
+              df -h .
               exit 1
             fi
