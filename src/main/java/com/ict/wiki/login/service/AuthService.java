@@ -128,17 +128,17 @@ public class AuthService {
             }
         }
 
-        // 승인 여부 확인
+        // 4. 계정 활성화 확인
+        if (!user.isActive()) {
+            throw new IllegalArgumentException("이메일 인증이 필요합니다");
+        }
+
+        // 5. 승인 여부 확인
         if (!user.isApproved()) {
             throw new IllegalArgumentException("관리자 승인 대기 중입니다");
         }
 
-        // 4. 계정 활성화 확인
-        if (!user.isActive()) {
-            throw new IllegalArgumentException("이메일 인증 필요");
-        }
-
-        // 5. 로그인 성공 → 실패 기록 초기화
+        // 6. 로그인 성공 → 실패 기록 초기화
         loginAttemptService.loginSucceeded(email);
 
         return user;

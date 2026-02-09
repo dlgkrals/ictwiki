@@ -30,7 +30,7 @@ public class EmailService {
      */
     public void sendVerificationEmail(String toEmail, String token) {
         String subject = "[ICT Wiki] 이메일 인증을 완료해주세요";
-        String verificationUrl = baseUrl + "/api/auth/verify-email?token=" + token;
+        String verificationUrl = baseUrl + "/verify-email?token=" + token;
 
         String content = String.format("""
                 <html>

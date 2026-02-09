@@ -93,7 +93,7 @@ public class EmailVerificationService {
         }
 
         // 계정 활성화 + 인증 날짜 업데이트
-        userService.activateUser(user);  // ✅ 변경
+        userService.activateUser(user);
 
         // 토큰 즉시 삭제 (1회용)
         verificationTokenCache.invalidate(token);

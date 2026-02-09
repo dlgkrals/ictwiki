@@ -86,7 +86,6 @@ public class User extends BaseEntity {
      */
     public void approve() {
         this.approved = true;
-        this.active = true;
     }
 
     /**
@@ -94,7 +93,6 @@ public class User extends BaseEntity {
      */
     public void reject() {
         this.approved = false;
-        this.active = false;
     }
 
     /**
