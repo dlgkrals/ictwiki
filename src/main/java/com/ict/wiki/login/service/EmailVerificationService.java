@@ -55,6 +55,9 @@ public class EmailVerificationService {
      * @param email 이메일
      */
     public void sendVerificationEmail(String email) {
+
+        invalidateAllTokensForEmail(email);
+
         // UUID 토큰 생성
         String token = UUID.randomUUID().toString();
 
@@ -168,6 +171,16 @@ public class EmailVerificationService {
 
         log.info("이메일 재전송 - Email: {}, 횟수: {}/3, 남은 횟수: {}",
                 email, newCount, 3 - newCount);
+    }
+
+    /**
+     * 특정 이메일의 모든 기존 토큰 무효화
+     */
+    private void invalidateAllTokensForEmail(String email) {
+        verificationTokenCache.asMap().entrySet()
+                .removeIf(entry -> entry.getValue().equals(email));
+
+        log.debug("기존 토큰 무효화 - Email: {}", email);
     }
 
     /**

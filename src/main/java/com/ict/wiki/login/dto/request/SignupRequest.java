@@ -22,10 +22,11 @@ public class SignupRequest {
 
     @NotBlank(message = "이름을 입력하세요")
     @Pattern(regexp = "^[가-힣a-zA-Z\\s]{2,30}$",
-            message = "이름은 한글, 영문만 사용 가능하며 2-30자여야 합니다")
+            message = "이름은 한글 또는 영문만 사용 가능하며, 초성은 사용할 수 없고 2~30자여야 합니다")
     private String name;
 
-    @Pattern(regexp = "^01[0-9][0-9]{7,8}$",
-            message = "올바른 핸드폰 번호 형식이 아닙니다 (예: 01012345678)")
+    @Pattern(
+            regexp = "^01[0-9]{8,9}$",
+            message = "휴대폰 번호는 01로 시작하는 10~11자리 숫자여야 합니다.")
     private String phoneNumber;
 }
