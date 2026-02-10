@@ -10,12 +10,13 @@ import com.ict.wiki.inquiry.dto.response.InquiryResponse;
 import com.ict.wiki.inquiry.dto.response.InquirySummaryResponse;
 import com.ict.wiki.inquiry.service.InquiryService;
 import com.ict.wiki.login.domain.User;
-import com.ict.wiki.util.SessionUtil;
-import jakarta.servlet.http.HttpSession;
+import com.ict.wiki.login.repository.UserRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
@@ -33,7 +34,15 @@ import java.util.stream.Collectors;
 public class InquiryController {
 
     private final InquiryService inquiryService;
-    private final SessionUtil sessionUtil;
+    private final UserRepository userRepository;  // ⭐ 추가
+
+    /**
+     * 현재 로그인한 사용자 조회 (헬퍼 메서드)
+     */
+    private User getCurrentUser(UserDetails userDetails) {
+        return userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다."));
+    }
 
     // ========== 생성 ==========
 
@@ -59,10 +68,10 @@ public class InquiryController {
      */
     @PostMapping
     public ResponseEntity<InquiryResponse> createInquiry(
-            @Valid @RequestBody InquirySaveRequest request,  // ← DTO 변경
-            HttpSession session) {
+            @Valid @RequestBody InquirySaveRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {  // ⭐ 변경
 
-        Inquiry inquiry = inquiryService.createInquiry(request);  // ← 파라미터 간소화
+        Inquiry inquiry = inquiryService.createInquiry(request);
 
         return ResponseEntity.ok(InquiryResponse.from(inquiry));
     }
@@ -153,9 +162,9 @@ public class InquiryController {
      */
     @GetMapping("/my-assigned")
     public ResponseEntity<List<InquirySummaryResponse>> getMyAssignedInquiries(
-            HttpSession session) {
+            @AuthenticationPrincipal UserDetails userDetails) {  // ⭐ 변경
 
-        User user = sessionUtil.getCurrentUser(session);
+        User user = getCurrentUser(userDetails);
 
         List<Inquiry> inquiries = inquiryService.findByWorkerId(user.getId());
 
@@ -173,9 +182,9 @@ public class InquiryController {
     @GetMapping("/my-assigned/by-status")
     public ResponseEntity<List<InquirySummaryResponse>> getMyAssignedInquiriesByStatus(
             @RequestParam InquiryStatus status,
-            HttpSession session) {
+            @AuthenticationPrincipal UserDetails userDetails) {  // ⭐ 변경
 
-        User user = sessionUtil.getCurrentUser(session);
+        User user = getCurrentUser(userDetails);
 
         List<Inquiry> inquiries = inquiryService.findByWorkerIdAndStatus(user.getId(), status);
 
@@ -246,9 +255,9 @@ public class InquiryController {
     @PutMapping("/{id}")
     public ResponseEntity<InquiryResponse> updateInquiry(
             @PathVariable Long id,
-            @Valid @RequestBody InquirySaveRequest request) {  // ← DTO 변경
+            @Valid @RequestBody InquirySaveRequest request) {
 
-        Inquiry inquiry = inquiryService.update(id, request);  // ← 파라미터 간소화
+        Inquiry inquiry = inquiryService.update(id, request);
 
         return ResponseEntity.ok(InquiryResponse.from(inquiry));
     }
@@ -272,8 +281,10 @@ public class InquiryController {
      * GET /api/inquiries/my-stats
      */
     @GetMapping("/my-stats")
-    public ResponseEntity<Map<String, Object>> getMyStats(HttpSession session) {
-        User user = sessionUtil.getCurrentUser(session);
+    public ResponseEntity<Map<String, Object>> getMyStats(
+            @AuthenticationPrincipal UserDetails userDetails) {  // ⭐ 변경
+
+        User user = getCurrentUser(userDetails);
 
         long completedCount = inquiryService.countCompletedByWorker(user.getId());
         long inProgressCount = inquiryService.countInProgressByWorker(user.getId());

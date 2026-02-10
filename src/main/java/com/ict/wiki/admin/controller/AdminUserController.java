@@ -5,11 +5,11 @@ import com.ict.wiki.admin.dto.response.AdminUserResponse;
 import com.ict.wiki.admin.service.AdminUserService;
 import com.ict.wiki.login.domain.Role;
 import com.ict.wiki.login.domain.User;
-import com.ict.wiki.security.annotation.RequireRole;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,7 +22,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/admin/users")
 @RequiredArgsConstructor
-@RequireRole(Role.ADMIN)  // 모든 API는 관리자만 접근
+@PreAuthorize("hasRole('ADMIN')")  // ⭐ 변경: 모든 API는 관리자만 접근
 public class AdminUserController {
 
     private final AdminUserService adminUserService;

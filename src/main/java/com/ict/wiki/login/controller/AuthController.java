@@ -1,27 +1,21 @@
 package com.ict.wiki.login.controller;
 
-import com.ict.wiki.login.domain.User;
 import com.ict.wiki.login.dto.request.LoginRequest;
-import com.ict.wiki.login.dto.request.PasswordChangeRequest;
-import com.ict.wiki.login.dto.request.PasswordResetRequest;
 import com.ict.wiki.login.dto.request.SignupRequest;
 import com.ict.wiki.login.dto.response.LoginResponse;
-import com.ict.wiki.login.dto.response.UserResponse;
 import com.ict.wiki.login.service.AuthService;
 import com.ict.wiki.login.service.EmailVerificationService;
 import com.ict.wiki.login.service.PasswordResetService;
-import com.ict.wiki.login.service.SessionManagementService;
-import com.ict.wiki.util.CsrfTokenUtil;
-import com.ict.wiki.util.SessionUtil;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
@@ -31,17 +25,11 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
-    private final SessionUtil sessionUtil;
-    private final SessionManagementService sessionManagementService;
     private final EmailVerificationService emailVerificationService;
     private final PasswordResetService passwordResetService;
 
-    // 세션에 저장할 사용자 정보 키
-    public static final String SESSION_USER_KEY = "loginUser";
-
     /**
      * 회원가입
-     * ⭐ 성공 시 인증 메일 발송
      */
     @PostMapping("/signup")
     public ResponseEntity<Map<String, String>> signup(@Valid @RequestBody SignupRequest request) {
@@ -49,13 +37,12 @@ public class AuthController {
 
         return ResponseEntity.ok(Map.of(
                 "message", "회원가입이 완료되었습니다. 이메일을 확인하여 인증을 완료해주세요.",
-                "email", request.getEmail()  // ← 변경: getFullEmail() → getEmail()
+                "email", request.getEmail()
         ));
     }
 
     /**
-     * ⭐ 이메일 인증 처리
-     * GET /api/auth/verify-email?token=xxx
+     * 이메일 인증 처리
      */
     @GetMapping("/verify-email")
     public ResponseEntity<Map<String, String>> verifyEmail(@RequestParam String token) {
@@ -67,175 +54,115 @@ public class AuthController {
     }
 
     /**
-     * ⭐ 인증 메일 재발송
-     * POST /api/auth/resend-verification?email=student@gmail.com
+     * 인증 메일 재발송
      */
     @PostMapping("/resend-verification")
-    public ResponseEntity<Map<String, String>> resendVerificationEmail(@RequestParam String email) {  // ← 변경
+    public ResponseEntity<Map<String, String>> resendVerificationEmail(@RequestParam String email) {
         emailVerificationService.resendVerificationEmail(email);
 
         return ResponseEntity.ok(Map.of(
-                "message", "인증 메일이 재발송되었습니다.",
-                "email", email  // ← 변경
+                "message", "인증 메일이 재발송되었습니다."
         ));
     }
 
     /**
-     * 로그인
-     * 성공 시 세션 ID 재생성 후 사용자 정보 저장 + 새로운 CSRF 토큰 발급
+     * 로그인 (JWT)
      */
     @PostMapping("/login")
-    public ResponseEntity<Map<String, Object>> login(
-            @RequestBody LoginRequest request,
-            HttpServletRequest httpRequest) {
+    public ResponseEntity<LoginResponse> login(
+            @Valid @RequestBody LoginRequest request,
+            HttpServletResponse response) {
 
-        // 인증 처리
-        User user = authService.login(request);
+        LoginResponse loginResponse = authService.login(request, response);
 
-        // ⭐ 세션 고정 공격 방지: 기존 세션 무효화 후 새 세션 생성
-        HttpSession oldSession = httpRequest.getSession(false);
-        if (oldSession != null) {
-            oldSession.invalidate();  // 기존 세션 무효화
-        }
+        return ResponseEntity.ok(loginResponse);
+    }
 
-        // 새로운 세션 생성
-        HttpSession newSession = httpRequest.getSession(true);
-        String newSessionId = newSession.getId();
+    /**
+     * Access Token 재발급
+     */
+    @PostMapping("/refresh")
+    public ResponseEntity<LoginResponse> refresh(
+            HttpServletRequest request,
+            HttpServletResponse response) {
 
-        // ⭐ 중복 로그인 방지: 기존 세션 무효화 및 새 세션 등록
-        sessionManagementService.registerSession(user.getEmail(), newSessionId);
+        LoginResponse loginResponse = authService.refresh(request, response);
 
-        // 새 세션에 사용자 정보 저장
-        newSession.setAttribute(SESSION_USER_KEY, user.getId());
-        newSession.setMaxInactiveInterval(30 * 60); // 30분
-
-        // 로그인 후 새로운 CSRF 토큰 발급
-        String csrfToken = CsrfTokenUtil.generateToken(newSession);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("user", LoginResponse.from(user));
-        response.put("csrfToken", csrfToken);
-
-        log.info("로그인 성공 - Email: {}, SessionId: {}", user.getEmail(), newSessionId);
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(loginResponse);
     }
 
     /**
      * 로그아웃
-     * 세션 무효화
      */
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(HttpSession session) {
-        String sessionId = session.getId();
-        sessionManagementService.removeSession(sessionId);
+    public ResponseEntity<Map<String, String>> logout(
+            @AuthenticationPrincipal UserDetails userDetails,
+            HttpServletResponse response) {
 
-        session.invalidate();
-        return ResponseEntity.ok("로그아웃되었습니다");
+        authService.logout(userDetails.getUsername(), response);
+
+        return ResponseEntity.ok(Map.of(
+                "message", "로그아웃되었습니다."
+        ));
     }
 
     /**
      * 현재 로그인한 사용자 정보 조회
      */
     @GetMapping("/me")
-    public ResponseEntity<UserResponse> getCurrentUser(HttpSession session) {
-        User user = sessionUtil.getCurrentUser(session);
-        return ResponseEntity.ok(UserResponse.from(user));
+    public ResponseEntity<Map<String, Object>> getCurrentUser(
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        return ResponseEntity.ok(Map.of(
+                "email", userDetails.getUsername(),
+                "authorities", userDetails.getAuthorities()
+        ));
     }
 
     /**
-     * 이메일 중복 체크
-     * GET /api/auth/check-email?email=student@gmail.com
+     * 비밀번호 재설정 요청
      */
-    @GetMapping("/check-email")
-    public ResponseEntity<Boolean> checkEmail(@RequestParam String email) {  // ← 변경
-        boolean isDuplicate = authService.checkEmailDuplicate(email);
-        return ResponseEntity.ok(isDuplicate);
-    }
-
-    /**
-     * CSRF 토큰 발급
-     */
-    @GetMapping("/csrf-token")
-    public ResponseEntity<Map<String, String>> getCsrfToken(HttpSession session) {
-        String token = CsrfTokenUtil.generateToken(session);
-        return ResponseEntity.ok(Map.of("csrfToken", token));
-    }
-
-    /**
-     * 비밀번호 재설정 이메일 발송
-     * POST /api/auth/forgot-password?email=student@gmail.com
-     */
-    @PostMapping("/forgot-password")
-    public ResponseEntity<Map<String, String>> forgotPassword(@RequestParam String email) {  // ← 변경
+    @PostMapping("/password-reset/request")
+    public ResponseEntity<Map<String, String>> requestPasswordReset(@RequestParam String email) {
         passwordResetService.sendPasswordResetEmail(email);
 
         return ResponseEntity.ok(Map.of(
-                "message", "비밀번호 재설정 메일이 발송되었습니다.",
-                "email", email  // ← 변경
+                "message", "비밀번호 재설정 이메일이 발송되었습니다."
         ));
     }
 
     /**
      * 비밀번호 재설정 토큰 검증
-     * GET /api/auth/reset-password?token=xxx
      */
-    @GetMapping("/reset-password")
-    public ResponseEntity<Map<String, Object>> validateResetToken(@RequestParam String token) {
+    @GetMapping("/password-reset/verify")
+    public ResponseEntity<Map<String, String>> verifyResetToken(@RequestParam String token) {
         boolean isValid = passwordResetService.validateResetToken(token);
 
-        if (!isValid) {
+        if (isValid) {
+            return ResponseEntity.ok(Map.of(
+                    "message", "유효한 토큰입니다."
+            ));
+        } else {
             return ResponseEntity.badRequest().body(Map.of(
-                    "valid", false,
-                    "message", "유효하지 않거나 만료된 토큰입니다"
+                    "error", "유효하지 않거나 만료된 토큰입니다."
             ));
         }
-
-        return ResponseEntity.ok(Map.of(
-                "valid", true,
-                "message", "유효한 토큰입니다"
-        ));
     }
 
     /**
-     * 비밀번호 재설정 완료
-     * POST /api/auth/reset-password
-     * Body: { "token": "xxx", "newPassword": "NewPass123!@#" }
+     * 새 비밀번호 설정
      */
-    @PostMapping("/reset-password")
+    @PostMapping("/password-reset/confirm")
     public ResponseEntity<Map<String, String>> resetPassword(
-            @Valid @RequestBody PasswordResetRequest request) {
+            @Valid @RequestBody Map<String, String> request) {
 
-        passwordResetService.resetPassword(request.getToken(), request.getNewPassword());
+        String token = request.get("token");
+        String newPassword = request.get("newPassword");
 
-        return ResponseEntity.ok(Map.of(
-                "message", "비밀번호가 성공적으로 변경되었습니다. 새 비밀번호로 로그인해주세요."
-        ));
-    }
-
-    /**
-     * 비밀번호 변경 (로그인 상태)
-     * PUT /api/auth/change-password
-     * Body: { "currentPassword": "Old123!@#", "newPassword": "New123!@#" }
-     */
-    @PutMapping("/change-password")
-    public ResponseEntity<Map<String, String>> changePassword(
-            @Valid @RequestBody PasswordChangeRequest request,
-            HttpSession session) {
-
-        // 세션에서 현재 사용자 정보 가져오기
-        User user = sessionUtil.getCurrentUser(session);
-
-        // 비밀번호 변경
-        authService.changePassword(
-                user.getId(),
-                request.getCurrentPassword(),
-                request.getNewPassword()
-        );
+        passwordResetService.resetPassword(token, newPassword);
 
         return ResponseEntity.ok(Map.of(
-                "message", "비밀번호가 성공적으로 변경되었습니다."
+                "message", "비밀번호가 재설정되었습니다."
         ));
     }
 }
-

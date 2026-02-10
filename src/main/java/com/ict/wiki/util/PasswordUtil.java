@@ -1,33 +1,39 @@
 package com.ict.wiki.util;
 
-import org.mindrot.jbcrypt.BCrypt;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
 
 /**
- * 비밀번호 암호화 유틸리티
- * BCrypt 알고리즘을 사용하여 비밀번호를 안전하게 암호화하고 검증합니다.
+ * Spring Security의 BCryptPasswordEncoder 사용
  */
+@Component
+@RequiredArgsConstructor
 public class PasswordUtil {
 
-    // BCrypt의 salt rounds (복잡도)
-    // 값이 클수록 더 안전하지만 느림 (일반적으로 10-12 사용)
-    private static final int SALT_ROUNDS = 10;
+    private final PasswordEncoder passwordEncoder;
 
     /**
-     * 평문 비밀번호를 BCrypt로 암호화
-     * @param plainPassword 평문 비밀번호
-     * @return 암호화된 비밀번호
+     * 비밀번호 암호화
      */
-    public static String encode(String plainPassword) {
-        return BCrypt.hashpw(plainPassword, BCrypt.gensalt(SALT_ROUNDS));
+    public String encode(String rawPassword) {
+        return passwordEncoder.encode(rawPassword);
     }
 
     /**
-     * 평문 비밀번호와 암호화된 비밀번호를 비교
-     * @param plainPassword 평문 비밀번호
-     * @param hashedPassword 암호화된 비밀번호
-     * @return 일치 여부
+     * 비밀번호 검증
      */
-    public static boolean matches(String plainPassword, String hashedPassword) {
-        return BCrypt.checkpw(plainPassword, hashedPassword);
+    public boolean matches(String rawPassword, String encodedPassword) {
+        return passwordEncoder.matches(rawPassword, encodedPassword);
+    }
+
+    /**
+     * 정적 메서드로 사용하는 레거시 코드 지원 (마이그레이션 기간 동안)
+     * @deprecated Spring Bean 주입 받아서 사용하세요
+     */
+    @Deprecated
+    public static String encodeStatic(String rawPassword) {
+        // 임시로 새 BCryptPasswordEncoder 인스턴스 생성
+        return new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder().encode(rawPassword);
     }
 }

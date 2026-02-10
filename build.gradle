@@ -29,22 +29,28 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 
+	// ⭐ Spring Security 추가
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+
+	// ⭐ JWT 라이브러리 추가
+	implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
+
 	// 이메일 발송
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 
-	// BCrypt 암호화를 위한 의존성
-	implementation 'org.mindrot:jbcrypt:0.4'
-
 	// Guava Cache (로그인 시도 관리)
 	implementation 'com.google.guava:guava:33.0.0-jre'
-
-	//세션 관리
-	implementation 'org.springframework.session:spring-session-core'
 
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'com.mysql:mysql-connector-j'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+	// ⭐ Spring Security 테스트 추가
+	testImplementation 'org.springframework.security:spring-security-test'
+
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 

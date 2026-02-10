@@ -4,9 +4,9 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.ict.wiki.login.domain.User;
 import com.ict.wiki.util.EmailService;
-import com.ict.wiki.util.PasswordUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,8 +28,9 @@ import java.util.concurrent.TimeUnit;
 @Transactional
 public class PasswordResetService {
 
-    private final UserService userService;  // ✅ UserRepository → UserService
+    private final UserService userService;
     private final EmailService emailService;
+    private final PasswordEncoder passwordEncoder;  // ⭐ 추가
 
     // 재설정 토큰 캐시 (1시간 후 자동 만료)
     private final Cache<String, String> resetTokenCache = CacheBuilder.newBuilder()
@@ -50,7 +51,7 @@ public class PasswordResetService {
      */
     public void sendPasswordResetEmail(String email) {
         // 사용자 존재 확인
-        User user = userService.findByEmail(email);  // ✅ 변경
+        User user = userService.findByEmail(email);
 
         // 계정 활성화 확인
         if (!user.isActive()) {
@@ -108,16 +109,16 @@ public class PasswordResetService {
         }
 
         // 사용자 조회
-        User user = userService.findByEmail(email);  // ✅ 변경
+        User user = userService.findByEmail(email);
 
-        // ⭐ 기존 비밀번호와 동일한지 검증
-        if (PasswordUtil.matches(newPassword, user.getPassword())) {
+        // ⭐ 기존 비밀번호와 동일한지 검증 (PasswordEncoder 사용)
+        if (passwordEncoder.matches(newPassword, user.getPassword())) {
             throw new IllegalArgumentException("기존 비밀번호와 동일한 비밀번호는 사용할 수 없습니다");
         }
 
-        // 비밀번호 암호화 및 업데이트
-        String encodedPassword = PasswordUtil.encode(newPassword);
-        userService.updatePassword(user, encodedPassword);  // ✅ 변경
+        // 비밀번호 암호화 및 업데이트 (PasswordEncoder 사용)
+        String encodedPassword = passwordEncoder.encode(newPassword);
+        userService.updatePassword(user, encodedPassword);
 
         // 토큰 즉시 삭제 (1회용)
         resetTokenCache.invalidate(token);
