@@ -10,7 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -20,6 +20,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+
+import java.util.List;
 
 /**
  * Spring Security 설정
@@ -51,7 +53,7 @@ public class SecurityConfig {
                 .authenticationProvider(customAuthenticationProvider())
 
                 // JSON 로그인 필터 등록
-                .addFilterBefore(jsonAuthenticationFilter(http),
+                .addFilterBefore(jsonAuthenticationFilter(),
                         UsernamePasswordAuthenticationFilter.class)
 
                 // 세션 관리
@@ -68,7 +70,7 @@ public class SecurityConfig {
 
                     csrf
                             .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                            .csrfTokenRequestHandler(requestHandler)  // ← 이 줄 추가
+                            .csrfTokenRequestHandler(requestHandler)
                             .ignoringRequestMatchers(
                                     "/api/auth/signup",
                                     "/api/auth/verify-email",
@@ -82,15 +84,15 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 인증 없이 접근 가능한 경로
                         .requestMatchers(
-                                "/api/auth/login",           // CSRF 검증 O, 인증 불필요
-                                "/api/auth/signup",          // CSRF 검증 X, 인증 불필요
-                                "/api/auth/check-email",     // GET이라 CSRF 무관
-                                "/api/auth/verify-email",    // CSRF 검증 X, 인증 불필요
-                                "/api/auth/resend-verification", // CSRF 검증 X
-                                "/api/auth/forgot-password", // CSRF 검증 X
-                                "/api/auth/reset-password",  // CSRF 검증 X
-                                "/api/auth/csrf-token",      // GET이라 CSRF 무관
-                                "/api/test/public"           // GET이라 CSRF 무관
+                                "/api/auth/login",
+                                "/api/auth/signup",
+                                "/api/auth/check-email",
+                                "/api/auth/verify-email",
+                                "/api/auth/resend-verification",
+                                "/api/auth/forgot-password",
+                                "/api/auth/reset-password",
+                                "/api/auth/csrf-token",
+                                "/api/test/public"
                         ).permitAll()
 
                         // 나머지 요청은 인증 필요
@@ -111,30 +113,23 @@ public class SecurityConfig {
     }
 
     /**
+     * AuthenticationManager Bean
+     */
+    @Bean
+    public AuthenticationManager authenticationManager() {
+        return new ProviderManager(List.of(customAuthenticationProvider()));
+    }
+
+    /**
      * JSON 로그인 필터 Bean
      */
     @Bean
-    public JsonAuthenticationFilter jsonAuthenticationFilter(HttpSecurity http) throws Exception {
-        AuthenticationManager authManager = authenticationManager(http);
-
-        JsonAuthenticationFilter filter = new JsonAuthenticationFilter(authManager);
+    public JsonAuthenticationFilter jsonAuthenticationFilter() {
+        JsonAuthenticationFilter filter = new JsonAuthenticationFilter(authenticationManager());
         filter.setAuthenticationSuccessHandler(loginSuccessHandler);
         filter.setAuthenticationFailureHandler(loginFailureHandler);
 
         log.info("JsonAuthenticationFilter 등록 완료");
         return filter;
-    }
-
-    /**
-     * AuthenticationManager Bean
-     */
-    @Bean
-    public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
-        AuthenticationManagerBuilder authManagerBuilder =
-                http.getSharedObject(AuthenticationManagerBuilder.class);
-
-        authManagerBuilder.authenticationProvider(customAuthenticationProvider());
-
-        return authManagerBuilder.build();
     }
 }

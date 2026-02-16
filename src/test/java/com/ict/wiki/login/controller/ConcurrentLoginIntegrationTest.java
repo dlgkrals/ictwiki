@@ -57,7 +57,7 @@ class ConcurrentLoginIntegrationTest {
                 .name("테스트")
                 .role(Role.STUDENT)
                 .active(true)
-                .lastVerifiedDate(LocalDate.now())
+                .approved(true)
                 .build();
         userRepository.save(testUser);
 
@@ -123,7 +123,7 @@ class ConcurrentLoginIntegrationTest {
                 .name("테스트2")
                 .role(Role.STUDENT)
                 .active(true)
-                .lastVerifiedDate(LocalDate.now())
+                .approved(true)
                 .build();
         userRepository.save(user2);
 
