@@ -22,7 +22,6 @@ import java.util.Map;
  * 로그인 성공 시 처리 핸들러
  * - JSON 응답 반환
  * - 세션 관리 (중복 로그인 방지)
- * - CSRF 토큰 발급 (Phase 3에서 활성화)
  */
 @Slf4j
 @Component
@@ -61,9 +60,6 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
 
         Map<String, Object> responseBody = new HashMap<>();
         responseBody.put("user", LoginResponse.from(userDetails.getUser()));
-
-        // CSRF 토큰은 Phase 3에서 추가
-        // responseBody.put("csrfToken", csrfToken);
 
         objectMapper.writeValue(response.getWriter(), responseBody);
 

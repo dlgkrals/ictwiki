@@ -1,17 +1,13 @@
 package com.ict.wiki.login.controller;
 
 import com.ict.wiki.login.domain.User;
-import com.ict.wiki.login.dto.request.LoginRequest;
 import com.ict.wiki.login.dto.request.PasswordChangeRequest;
 import com.ict.wiki.login.dto.request.PasswordResetRequest;
 import com.ict.wiki.login.dto.request.SignupRequest;
-import com.ict.wiki.login.dto.response.LoginResponse;
 import com.ict.wiki.login.dto.response.UserResponse;
 import com.ict.wiki.login.service.AuthService;
 import com.ict.wiki.login.service.EmailVerificationService;
 import com.ict.wiki.login.service.PasswordResetService;
-import com.ict.wiki.login.service.SessionManagementService;
-import com.ict.wiki.util.CsrfTokenUtil;
 import com.ict.wiki.util.SessionUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -19,9 +15,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
@@ -32,12 +28,41 @@ public class AuthController {
 
     private final AuthService authService;
     private final SessionUtil sessionUtil;
-    private final SessionManagementService sessionManagementService;
     private final EmailVerificationService emailVerificationService;
     private final PasswordResetService passwordResetService;
 
     // 세션에 저장할 사용자 정보 키
     public static final String SESSION_USER_KEY = "loginUser";
+
+    /**
+     * CSRF 토큰 발급
+     * GET /api/auth/csrf-token
+     *
+     * 프론트엔드 앱 시작 시 가장 먼저 호출
+     * CSRF 토큰을 쿠키와 응답에 포함하여 반환
+     */
+    @GetMapping("/csrf-token")
+    public ResponseEntity<Map<String, String>> getCsrfToken(HttpServletRequest request) {
+        HttpSession session = request.getSession(true);
+
+        log.info("========== CSRF 토큰 발급 시작 ==========");
+        log.info("세션 ID: {}", session.getId());
+        log.info("세션 생성 시간: {}", new java.util.Date(session.getCreationTime()));
+        log.info("세션 isNew: {}", session.isNew());
+
+        CsrfToken csrfToken = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
+        if (csrfToken == null) {
+            csrfToken = (CsrfToken) request.getAttribute("_csrf");
+        }
+
+        String token = csrfToken != null ? csrfToken.getToken() : "";
+
+        log.info("발급된 CSRF 토큰: {}", token);
+        log.info("CSRF 토큰 헤더 이름: {}", csrfToken != null ? csrfToken.getHeaderName() : "null");
+        log.info("========== CSRF 토큰 발급 완료 ==========");
+
+        return ResponseEntity.ok(Map.of("csrfToken", token, "sessionId", session.getId()));
+    }
 
     /**
      * 회원가입
@@ -49,7 +74,7 @@ public class AuthController {
 
         return ResponseEntity.ok(Map.of(
                 "message", "회원가입이 완료되었습니다. 이메일을 확인하여 인증을 완료해주세요.",
-                "email", request.getEmail()  // ← 변경: getFullEmail() → getEmail()
+                "email", request.getEmail()
         ));
     }
 
@@ -71,65 +96,24 @@ public class AuthController {
      * POST /api/auth/resend-verification?email=student@gmail.com
      */
     @PostMapping("/resend-verification")
-    public ResponseEntity<Map<String, String>> resendVerificationEmail(@RequestParam String email) {  // ← 변경
+    public ResponseEntity<Map<String, String>> resendVerificationEmail(@RequestParam String email) {
         emailVerificationService.resendVerificationEmail(email);
 
         return ResponseEntity.ok(Map.of(
                 "message", "인증 메일이 재발송되었습니다.",
-                "email", email  // ← 변경
+                "email", email
         ));
     }
 
-    /**
-     * 로그인
-     * 성공 시 세션 ID 재생성 후 사용자 정보 저장 + 새로운 CSRF 토큰 발급
-     */
-    @PostMapping("/login")
-    public ResponseEntity<Map<String, Object>> login(
-            @RequestBody LoginRequest request,
-            HttpServletRequest httpRequest) {
-
-        // 인증 처리
-        User user = authService.login(request);
-
-        // ⭐ 세션 고정 공격 방지: 기존 세션 무효화 후 새 세션 생성
-        HttpSession oldSession = httpRequest.getSession(false);
-        if (oldSession != null) {
-            oldSession.invalidate();  // 기존 세션 무효화
-        }
-
-        // 새로운 세션 생성
-        HttpSession newSession = httpRequest.getSession(true);
-        String newSessionId = newSession.getId();
-
-        // ⭐ 중복 로그인 방지: 기존 세션 무효화 및 새 세션 등록
-        sessionManagementService.registerSession(user.getEmail(), newSessionId);
-
-        // 새 세션에 사용자 정보 저장
-        newSession.setAttribute(SESSION_USER_KEY, user.getId());
-        newSession.setMaxInactiveInterval(30 * 60); // 30분
-
-        // 로그인 후 새로운 CSRF 토큰 발급
-        String csrfToken = CsrfTokenUtil.generateToken(newSession);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("user", LoginResponse.from(user));
-        response.put("csrfToken", csrfToken);
-
-        log.info("로그인 성공 - Email: {}, SessionId: {}", user.getEmail(), newSessionId);
-
-        return ResponseEntity.ok(response);
-    }
+    // ⭐⭐⭐ /login 엔드포인트 완전 제거! ⭐⭐⭐
+    // → JsonAuthenticationFilter가 처리함
 
     /**
      * 로그아웃
-     * 세션 무효화
+     * ⭐ Security가 처리하도록 변경 예정 (현재는 유지)
      */
     @PostMapping("/logout")
     public ResponseEntity<String> logout(HttpSession session) {
-        String sessionId = session.getId();
-        sessionManagementService.removeSession(sessionId);
-
         session.invalidate();
         return ResponseEntity.ok("로그아웃되었습니다");
     }
@@ -148,31 +132,25 @@ public class AuthController {
      * GET /api/auth/check-email?email=student@gmail.com
      */
     @GetMapping("/check-email")
-    public ResponseEntity<Boolean> checkEmail(@RequestParam String email) {  // ← 변경
+    public ResponseEntity<Boolean> checkEmail(@RequestParam String email) {
         boolean isDuplicate = authService.checkEmailDuplicate(email);
         return ResponseEntity.ok(isDuplicate);
     }
 
-    /**
-     * CSRF 토큰 발급
-     */
-    @GetMapping("/csrf-token")
-    public ResponseEntity<Map<String, String>> getCsrfToken(HttpSession session) {
-        String token = CsrfTokenUtil.generateToken(session);
-        return ResponseEntity.ok(Map.of("csrfToken", token));
-    }
+    // ⭐ CSRF 토큰 엔드포인트 제거!
+    // → Security가 자동으로 처리
 
     /**
      * 비밀번호 재설정 이메일 발송
      * POST /api/auth/forgot-password?email=student@gmail.com
      */
     @PostMapping("/forgot-password")
-    public ResponseEntity<Map<String, String>> forgotPassword(@RequestParam String email) {  // ← 변경
+    public ResponseEntity<Map<String, String>> forgotPassword(@RequestParam String email) {
         passwordResetService.sendPasswordResetEmail(email);
 
         return ResponseEntity.ok(Map.of(
                 "message", "비밀번호 재설정 메일이 발송되었습니다.",
-                "email", email  // ← 변경
+                "email", email
         ));
     }
 
@@ -238,4 +216,3 @@ public class AuthController {
         ));
     }
 }
-

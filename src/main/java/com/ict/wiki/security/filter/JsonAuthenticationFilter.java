@@ -3,8 +3,10 @@ package com.ict.wiki.security.filter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ict.wiki.login.dto.request.LoginRequest;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -48,6 +50,34 @@ public class JsonAuthenticationFilter extends AbstractAuthenticationProcessingFi
                                                 HttpServletResponse response)
             throws AuthenticationException, IOException, ServletException {
 
+        log.info("========== 로그인 요청 시작 ==========");
+
+        // 세션 정보 로그
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            log.info("기존 세션 ID: {}", session.getId());
+            log.info("세션 생성 시간: {}", new java.util.Date(session.getCreationTime()));
+        } else {
+            log.info("기존 세션 없음");
+        }
+
+        // CSRF 토큰 로그
+        String csrfHeader = request.getHeader("X-XSRF-TOKEN");
+        Cookie[] cookies = request.getCookies();
+        String csrfCookie = null;
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("XSRF-TOKEN".equals(cookie.getName())) {
+                    csrfCookie = cookie.getValue();
+                    break;
+                }
+            }
+        }
+
+        log.info("헤더의 CSRF 토큰: {}", csrfHeader);
+        log.info("쿠키의 CSRF 토큰: {}", csrfCookie);
+        log.info("CSRF 토큰 일치 여부: {}", csrfHeader != null && csrfHeader.equals(csrfCookie));
+
         log.debug("JSON 로그인 필터 실행 - URI: {}", request.getRequestURI());
 
         // 1. Content-Type 검증
@@ -70,13 +100,13 @@ public class JsonAuthenticationFilter extends AbstractAuthenticationProcessingFi
         String password = loginRequest.getPassword();
 
         log.debug("로그인 요청 파싱 완료 - Email: {}", email);
+        log.info("========== 로그인 요청 파싱 완료 ==========");
 
         // 3. Authentication 객체 생성
         UsernamePasswordAuthenticationToken authRequest =
                 new UsernamePasswordAuthenticationToken(email, password);
 
         // 4. AuthenticationManager에게 인증 위임
-        // → CustomAuthenticationProvider.authenticate() 호출됨
         return this.getAuthenticationManager().authenticate(authRequest);
     }
 }

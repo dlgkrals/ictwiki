@@ -1,6 +1,5 @@
 package com.ict.wiki.config;
 
-import com.ict.wiki.security.interceptor.RoleCheckInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -8,7 +7,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.util.Arrays;
@@ -16,8 +14,6 @@ import java.util.Arrays;
 @Configuration
 @RequiredArgsConstructor
 public class WebConfig implements WebMvcConfigurer {
-
-    private final RoleCheckInterceptor roleCheckInterceptor;
 
     /**
      * CORS 필터 등록 (최우선)
@@ -48,12 +44,14 @@ public class WebConfig implements WebMvcConfigurer {
         config.setAllowedHeaders(Arrays.asList(
                 "Authorization",
                 "Content-Type",
-                "X-CSRF-TOKEN"
+                "X-CSRF-TOKEN",
+                "X-XSRF-TOKEN"  // Security CSRF 토큰 헤더
         ));
 
         // 노출할 헤더
         config.setExposedHeaders(Arrays.asList(
-                "X-CSRF-TOKEN"
+                "X-CSRF-TOKEN",
+                "X-XSRF-TOKEN"
         ));
 
         source.registerCorsConfiguration("/**", config);
@@ -65,6 +63,7 @@ public class WebConfig implements WebMvcConfigurer {
 
     /**
      * 보안 헤더 필터 등록
+     * Security와 독립적으로 작동
      */
     @Bean
     public FilterRegistrationBean<SecurityHeaderFilter> securityHeaderFilter() {
@@ -80,6 +79,7 @@ public class WebConfig implements WebMvcConfigurer {
 
     /**
      * XSS 방지 필터 등록
+     * Security와 독립적으로 작동
      */
     @Bean
     public FilterRegistrationBean<XssFilter> xssFilter() {
@@ -93,43 +93,7 @@ public class WebConfig implements WebMvcConfigurer {
         return registrationBean;
     }
 
-    /**
-     * CSRF 방지 필터 등록
-     */
-    @Bean
-    public FilterRegistrationBean<CsrfFilter> csrfFilter() {
-        FilterRegistrationBean<CsrfFilter> registrationBean =
-                new FilterRegistrationBean<>();
-
-        registrationBean.setFilter(new CsrfFilter());
-        registrationBean.addUrlPatterns("/api/*");
-        registrationBean.setOrder(3);
-
-        return registrationBean;
-    }
-
-    /**
-     * 세션 인증 필터 등록
-     */
-    @Bean
-    public FilterRegistrationBean<SessionAuthenticationFilter> sessionAuthFilter() {
-        FilterRegistrationBean<SessionAuthenticationFilter> registrationBean =
-                new FilterRegistrationBean<>();
-
-        registrationBean.setFilter(new SessionAuthenticationFilter());
-        registrationBean.addUrlPatterns("/api/*");
-        registrationBean.setOrder(4);
-
-        return registrationBean;
-    }
-
-    /**
-     * 권한 체크 인터셉터 등록
-     */
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(roleCheckInterceptor)
-                .addPathPatterns("/api/**")
-                .order(1);
-    }
+    // ⭐ SessionAuthenticationFilter 제거!
+    // ⭐ CsrfFilter 제거!
+    // ⭐ RoleCheckInterceptor 제거! (이미 없음)
 }
