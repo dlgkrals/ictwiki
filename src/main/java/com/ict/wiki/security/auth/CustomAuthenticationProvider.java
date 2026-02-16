@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -38,6 +39,12 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 
         // 1. 사용자 조회
         CustomUserDetails userDetails = (CustomUserDetails) userDetailsService.loadUserByUsername(email);
+
+        // 비활성 사용자 체크
+        if (!userDetails.isEnabled()) {
+            log.warn("비활성 사용자 - Email: {}", email);
+            throw new DisabledException("비활성화된 계정입니다");
+        }
 
         // 2. 비밀번호 검증
         if (!passwordEncoder.matches(password, userDetails.getPassword())) {
