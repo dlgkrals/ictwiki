@@ -8,13 +8,12 @@ import com.ict.wiki.document.dto.response.DocumentCategoryResponse;
 import com.ict.wiki.document.dto.response.DocumentResponse;
 import com.ict.wiki.document.dto.response.DocumentSummaryResponse;
 import com.ict.wiki.document.service.DocumentService;
-import com.ict.wiki.login.domain.User;
-import com.ict.wiki.util.SessionUtil;
-import jakarta.servlet.http.HttpSession;
+import com.ict.wiki.security.auth.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
@@ -32,7 +31,6 @@ import java.util.stream.Collectors;
 public class DocumentController {
 
     private final DocumentService documentService;
-    private final SessionUtil sessionUtil;
 
     /**
      * 카테고리 목록 조회
@@ -58,15 +56,13 @@ public class DocumentController {
     @PostMapping
     public ResponseEntity<DocumentResponse> createDocument(
             @Valid @RequestBody DocumentCreateRequest request,
-            HttpSession session) {
-
-        User user = sessionUtil.getCurrentUser(session);
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         Document document = documentService.createDocument(
                 request.getTitle(),
                 request.getContent(),
                 request.getCategoryCode(),
-                user
+                userDetails.getUser()  // User 엔티티 전달
         );
 
         return ResponseEntity.ok(DocumentResponse.from(document));
@@ -187,9 +183,10 @@ public class DocumentController {
      * GET /api/documents/my
      */
     @GetMapping("/my")
-    public ResponseEntity<List<DocumentSummaryResponse>> getMyDocuments(HttpSession session) {
-        User user = sessionUtil.getCurrentUser(session);
-        List<Document> documents = documentService.getDocumentsByAuthor(user.getId());
+    public ResponseEntity<List<DocumentSummaryResponse>> getMyDocuments(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        List<Document> documents = documentService.getDocumentsByAuthor(userDetails.getId());
         List<DocumentSummaryResponse> response = documents.stream()
                 .map(DocumentSummaryResponse::from)
                 .collect(Collectors.toList());
@@ -204,16 +201,14 @@ public class DocumentController {
     public ResponseEntity<DocumentResponse> updateDocument(
             @PathVariable Long id,
             @Valid @RequestBody DocumentUpdateRequest request,
-            HttpSession session) {
-
-        User user = sessionUtil.getCurrentUser(session);
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         Document document = documentService.updateDocument(
                 id,
                 request.getTitle(),
                 request.getContent(),
-                request.getCategoryCode(),  // ← 추가
-                user,
+                request.getCategoryCode(),
+                userDetails.getUser(),  // User 엔티티 전달
                 request.getEditReason()
         );
 
@@ -227,10 +222,9 @@ public class DocumentController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, String>> deleteDocument(
             @PathVariable Long id,
-            HttpSession session) {
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        User user = sessionUtil.getCurrentUser(session);
-        documentService.deleteDocument(id, user);
+        documentService.deleteDocument(id, userDetails.getUser());  // User 엔티티 전달
 
         return ResponseEntity.ok(Map.of("message", "문서가 삭제되었습니다"));
     }
@@ -242,10 +236,9 @@ public class DocumentController {
     @PostMapping("/{id}/restore")
     public ResponseEntity<Map<String, String>> restoreDocument(
             @PathVariable Long id,
-            HttpSession session) {
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        User user = sessionUtil.getCurrentUser(session);
-        documentService.restoreDocument(id, user);
+        documentService.restoreDocument(id, userDetails.getUser());  // User 엔티티 전달
 
         return ResponseEntity.ok(Map.of("message", "문서가 복원되었습니다"));
     }

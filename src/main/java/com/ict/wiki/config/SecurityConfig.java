@@ -14,6 +14,7 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -52,6 +53,13 @@ public class SecurityConfig {
                 // JSON 로그인 필터 등록
                 .addFilterBefore(jsonAuthenticationFilter(http),
                         UsernamePasswordAuthenticationFilter.class)
+
+                // 세션 관리
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                        .maximumSessions(1)  // 동시 세션 1개
+                        .maxSessionsPreventsLogin(false)  // 새 로그인 시 기존 세션 무효화
+                )
 
                 // ⭐ CSRF 활성화 (로그인 포함 모든 POST/PUT/DELETE에 적용)
                 .csrf(csrf -> {

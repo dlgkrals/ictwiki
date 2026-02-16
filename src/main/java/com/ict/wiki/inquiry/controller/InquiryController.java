@@ -10,12 +10,14 @@ import com.ict.wiki.inquiry.dto.response.InquiryResponse;
 import com.ict.wiki.inquiry.dto.response.InquirySummaryResponse;
 import com.ict.wiki.inquiry.service.InquiryService;
 import com.ict.wiki.login.domain.User;
+import com.ict.wiki.security.auth.CustomUserDetails;
 import com.ict.wiki.util.SessionUtil;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
@@ -153,11 +155,9 @@ public class InquiryController {
      */
     @GetMapping("/my-assigned")
     public ResponseEntity<List<InquirySummaryResponse>> getMyAssignedInquiries(
-            HttpSession session) {
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        User user = sessionUtil.getCurrentUser(session);
-
-        List<Inquiry> inquiries = inquiryService.findByWorkerId(user.getId());
+        List<Inquiry> inquiries = inquiryService.findByWorkerId(userDetails.getId());
 
         List<InquirySummaryResponse> response = inquiries.stream()
                 .map(InquirySummaryResponse::from)
@@ -173,11 +173,9 @@ public class InquiryController {
     @GetMapping("/my-assigned/by-status")
     public ResponseEntity<List<InquirySummaryResponse>> getMyAssignedInquiriesByStatus(
             @RequestParam InquiryStatus status,
-            HttpSession session) {
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        User user = sessionUtil.getCurrentUser(session);
-
-        List<Inquiry> inquiries = inquiryService.findByWorkerIdAndStatus(user.getId(), status);
+        List<Inquiry> inquiries = inquiryService.findByWorkerIdAndStatus(userDetails.getId(), status);
 
         List<InquirySummaryResponse> response = inquiries.stream()
                 .map(InquirySummaryResponse::from)
@@ -272,14 +270,14 @@ public class InquiryController {
      * GET /api/inquiries/my-stats
      */
     @GetMapping("/my-stats")
-    public ResponseEntity<Map<String, Object>> getMyStats(HttpSession session) {
-        User user = sessionUtil.getCurrentUser(session);
+    public ResponseEntity<Map<String, Object>> getMyStats(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        long completedCount = inquiryService.countCompletedByWorker(user.getId());
-        long inProgressCount = inquiryService.countInProgressByWorker(user.getId());
+        long completedCount = inquiryService.countCompletedByWorker(userDetails.getId());
+        long inProgressCount = inquiryService.countInProgressByWorker(userDetails.getId());
 
         return ResponseEntity.ok(Map.of(
-                "name", user.getName(),
+                "name", userDetails.getName(),
                 "completedCount", completedCount,
                 "inProgressCount", inProgressCount
         ));

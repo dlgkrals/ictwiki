@@ -11,7 +11,10 @@ import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -53,6 +56,13 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
         session.setMaxInactiveInterval(30 * 60);
 
         log.debug("세션 생성 완료 - SessionId: {}, Email: {}", sessionId, email);
+
+        // ⭐ 여기에 추가!
+        SecurityContext context = SecurityContextHolder.getContext();
+        request.getSession().setAttribute(
+                HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+                context
+        );
 
         // 3. JSON 응답 작성
         response.setStatus(HttpServletResponse.SC_OK);

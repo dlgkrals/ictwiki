@@ -8,6 +8,7 @@ import com.ict.wiki.login.dto.response.UserResponse;
 import com.ict.wiki.login.service.AuthService;
 import com.ict.wiki.login.service.EmailVerificationService;
 import com.ict.wiki.login.service.PasswordResetService;
+import com.ict.wiki.security.auth.CustomUserDetails;
 import com.ict.wiki.util.SessionUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -15,6 +16,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.*;
 
@@ -122,9 +124,10 @@ public class AuthController {
      * 현재 로그인한 사용자 정보 조회
      */
     @GetMapping("/me")
-    public ResponseEntity<UserResponse> getCurrentUser(HttpSession session) {
-        User user = sessionUtil.getCurrentUser(session);
-        return ResponseEntity.ok(UserResponse.from(user));
+    public ResponseEntity<UserResponse> getCurrentUser(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        return ResponseEntity.ok(UserResponse.from(userDetails.getUser()));
     }
 
     /**
@@ -199,14 +202,11 @@ public class AuthController {
     @PutMapping("/change-password")
     public ResponseEntity<Map<String, String>> changePassword(
             @Valid @RequestBody PasswordChangeRequest request,
-            HttpSession session) {
-
-        // 세션에서 현재 사용자 정보 가져오기
-        User user = sessionUtil.getCurrentUser(session);
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         // 비밀번호 변경
         authService.changePassword(
-                user.getId(),
+                userDetails.getId(),
                 request.getCurrentPassword(),
                 request.getNewPassword()
         );

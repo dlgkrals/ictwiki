@@ -1,5 +1,6 @@
 package com.ict.wiki.security.auth;
 
+import com.ict.wiki.login.domain.Role;
 import com.ict.wiki.login.domain.User;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -89,5 +90,12 @@ public class CustomUserDetails implements UserDetails {
      */
     public String getName() {
         return user.getName();
+    }
+
+    /**
+     * 사용자 권한 (Role)
+     */
+    public Role getRole() {
+        return user.getRole();
     }
 }
