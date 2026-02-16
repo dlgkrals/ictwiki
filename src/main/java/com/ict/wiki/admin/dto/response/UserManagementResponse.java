@@ -6,7 +6,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -16,7 +15,7 @@ import java.time.LocalDateTime;
 @Getter
 @Builder
 @AllArgsConstructor
-public class AdminUserResponse {
+public class UserManagementResponse {
 
     private Long id;
     private String email;
@@ -35,8 +34,8 @@ public class AdminUserResponse {
     /**
      * User 엔티티에서 DTO 생성
      */
-    public static AdminUserResponse from(User user) {
-        return AdminUserResponse.builder()
+    public static UserManagementResponse from(User user) {
+        return UserManagementResponse.builder()
                 .id(user.getId())
                 .email(user.getEmail())
                 .name(user.getName())

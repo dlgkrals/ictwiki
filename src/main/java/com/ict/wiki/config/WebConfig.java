@@ -92,8 +92,4 @@ public class WebConfig implements WebMvcConfigurer {
 
         return registrationBean;
     }
-
-    // ⭐ SessionAuthenticationFilter 제거!
-    // ⭐ CsrfFilter 제거!
-    // ⭐ RoleCheckInterceptor 제거! (이미 없음)
 }
