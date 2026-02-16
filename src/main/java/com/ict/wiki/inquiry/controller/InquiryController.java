@@ -9,9 +9,7 @@ import com.ict.wiki.inquiry.dto.response.BuildingResponse;
 import com.ict.wiki.inquiry.dto.response.InquiryResponse;
 import com.ict.wiki.inquiry.dto.response.InquirySummaryResponse;
 import com.ict.wiki.inquiry.service.InquiryService;
-import com.ict.wiki.login.domain.User;
 import com.ict.wiki.security.auth.CustomUserDetails;
-import com.ict.wiki.util.SessionUtil;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +33,6 @@ import java.util.stream.Collectors;
 public class InquiryController {
 
     private final InquiryService inquiryService;
-    private final SessionUtil sessionUtil;
 
     // ========== 생성 ==========
 

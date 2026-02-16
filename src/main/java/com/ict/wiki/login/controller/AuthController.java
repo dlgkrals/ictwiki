@@ -9,7 +9,6 @@ import com.ict.wiki.login.service.AuthService;
 import com.ict.wiki.login.service.EmailVerificationService;
 import com.ict.wiki.login.service.PasswordResetService;
 import com.ict.wiki.security.auth.CustomUserDetails;
-import com.ict.wiki.util.SessionUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -29,7 +28,6 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
-    private final SessionUtil sessionUtil;
     private final EmailVerificationService emailVerificationService;
     private final PasswordResetService passwordResetService;
 

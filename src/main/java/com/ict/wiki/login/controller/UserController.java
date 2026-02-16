@@ -6,8 +6,6 @@ import com.ict.wiki.login.dto.response.UserResponse;
 import com.ict.wiki.login.dto.response.UserSummaryResponse;
 import com.ict.wiki.login.service.UserService;
 import com.ict.wiki.security.auth.CustomUserDetails;
-import com.ict.wiki.util.SessionUtil;
-import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -28,7 +26,6 @@ import java.util.stream.Collectors;
 public class UserController {
 
     private final UserService userService;
-    private final SessionUtil sessionUtil;
 
     /**
      * 내 정보 조회
