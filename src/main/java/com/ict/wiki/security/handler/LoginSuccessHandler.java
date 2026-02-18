@@ -15,6 +15,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -57,12 +58,14 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
 
         log.debug("세션 생성 완료 - SessionId: {}, Email: {}", sessionId, email);
 
-        // ⭐ 여기에 추가!
         SecurityContext context = SecurityContextHolder.getContext();
         request.getSession().setAttribute(
                 HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
                 context
         );
+
+        CsrfToken csrfToken = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
+
 
         // 3. JSON 응답 작성
         response.setStatus(HttpServletResponse.SC_OK);
@@ -70,6 +73,7 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
 
         Map<String, Object> responseBody = new HashMap<>();
         responseBody.put("user", LoginResponse.from(userDetails.getUser()));
+        responseBody.put("csrfToken", csrfToken.getToken());
 
         objectMapper.writeValue(response.getWriter(), responseBody);
 
