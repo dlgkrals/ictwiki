@@ -1,5 +1,6 @@
 package com.ict.wiki.security.auth;
 
+import com.ict.wiki.login.service.LoginAttemptService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -23,13 +24,8 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 
     private final CustomUserDetailsService userDetailsService;
     private final PasswordEncoder passwordEncoder;
+    private final LoginAttemptService loginAttemptService;  // ⭐ 추가
 
-    /**
-     * 실제 인증 처리
-     * @param authentication 인증 요청 정보 (email, password)
-     * @return 인증 성공 시 Authentication 객체 (권한 정보 포함)
-     * @throws AuthenticationException 인증 실패 시
-     */
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         String email = authentication.getName();
@@ -37,34 +33,85 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 
         log.debug("인증 시도 - Email: {}", email);
 
-        // 1. 사용자 조회
-        CustomUserDetails userDetails = (CustomUserDetails) userDetailsService.loadUserByUsername(email);
+        // ⭐ 1. 계정 잠금 확인 (가장 먼저!)
+        if (loginAttemptService.isLocked(email)) {
+            long remainingSeconds = loginAttemptService.getRemainingLockTime(email);
+            long remainingMinutes = remainingSeconds / 60;
 
-        // 비활성 사용자 체크
+            log.warn("잠금된 계정 로그인 시도 - Email: {}", email);
+            throw new BadCredentialsException(
+                    String.format("로그인 시도 횟수를 초과했습니다. %d분 %d초 후 다시 시도해주세요.",
+                            remainingMinutes, remainingSeconds % 60)
+            );
+        }
+
+        // 2. 사용자 조회
+        CustomUserDetails userDetails;
+        try {
+            userDetails = (CustomUserDetails) userDetailsService.loadUserByUsername(email);
+        } catch (Exception e) {
+            // ⭐ 사용자 없음 → 실패 기록
+            loginAttemptService.loginFailed(email);
+            handleLoginFailure(email);
+            throw e;
+        }
+
+        // 3. 비활성 사용자 체크
         if (!userDetails.isEnabled()) {
             log.warn("비활성 사용자 - Email: {}", email);
-            throw new DisabledException("비활성화된 계정입니다");
+            throw new DisabledException("이메일 인증이 필요합니다");
         }
 
-        // 2. 비밀번호 검증
+        // ⭐ 4. 승인 여부 확인
+        if (!userDetails.getUser().isApproved()) {
+            log.warn("미승인 사용자 - Email: {}", email);
+            throw new DisabledException("관리자 승인 대기 중입니다");
+        }
+
+        // 5. 비밀번호 검증
         if (!passwordEncoder.matches(password, userDetails.getPassword())) {
             log.warn("비밀번호 불일치 - Email: {}", email);
-            throw new BadCredentialsException("비밀번호가 일치하지 않습니다");
+
+            // ⭐ 비밀번호 틀림 → 실패 기록
+            loginAttemptService.loginFailed(email);
+            handleLoginFailure(email);
+
+            throw new BadCredentialsException("이메일 또는 비밀번호가 일치하지 않습니다");
         }
+
+        // ⭐ 6. 로그인 성공 → 실패 기록 초기화
+        loginAttemptService.loginSucceeded(email);
 
         log.info("인증 성공 - Email: {}, Role: {}", email, userDetails.getUser().getRole());
 
-        // 3. 인증 성공 객체 반환
+        // 7. 인증 성공 객체 반환
         return new UsernamePasswordAuthenticationToken(
-                userDetails,  // principal (인증된 사용자 정보)
-                password,     // credentials
-                userDetails.getAuthorities()  // authorities (권한 목록)
+                userDetails,
+                password,
+                userDetails.getAuthorities()
         );
     }
 
-    /**
-     * 이 Provider가 처리할 수 있는 Authentication 타입 지정
-     */
+    // ⭐ 실패 후 잠금 여부 체크 및 적절한 메시지 throw
+    private void handleLoginFailure(String email) {
+        if (loginAttemptService.isLocked(email)) {
+            long remainingSeconds = loginAttemptService.getRemainingLockTime(email);
+            long remainingMinutes = remainingSeconds / 60;
+            throw new BadCredentialsException(
+                    String.format("로그인 시도 횟수를 초과했습니다. %d분 %d초 후 다시 시도해주세요.",
+                            remainingMinutes, remainingSeconds % 60)
+            );
+        }
+
+        int remainingAttempts = loginAttemptService.getRemainingAttempts(email);
+        if (remainingAttempts > 0) {
+            throw new BadCredentialsException(
+                    String.format("이메일 또는 비밀번호가 일치하지 않습니다. (남은 시도: %d회)",
+                            remainingAttempts)
+            );
+        }
+    }
+
     @Override
     public boolean supports(Class<?> authentication) {
         return UsernamePasswordAuthenticationToken.class.isAssignableFrom(authentication);

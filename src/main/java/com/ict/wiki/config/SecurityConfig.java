@@ -1,5 +1,6 @@
 package com.ict.wiki.config;
 
+import com.ict.wiki.login.service.LoginAttemptService;
 import com.ict.wiki.security.auth.CustomAuthenticationProvider;
 import com.ict.wiki.security.auth.CustomUserDetailsService;
 import com.ict.wiki.security.filter.JsonAuthenticationFilter;
@@ -40,6 +41,7 @@ public class SecurityConfig {
     private final LoginSuccessHandler loginSuccessHandler;
     private final LoginFailureHandler loginFailureHandler;
     private final PasswordEncoder passwordEncoder;
+    private final LoginAttemptService loginAttemptService;
 
     /**
      * Security 필터 체인 설정
@@ -59,6 +61,7 @@ public class SecurityConfig {
                 // 세션 관리
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                        .sessionFixation().newSession()
                         .maximumSessions(1)  // 동시 세션 1개
                         .maxSessionsPreventsLogin(false)  // 새 로그인 시 기존 세션 무효화
                 )
@@ -109,7 +112,7 @@ public class SecurityConfig {
     @Bean
     public CustomAuthenticationProvider customAuthenticationProvider() {
         log.info("CustomAuthenticationProvider Bean 생성");
-        return new CustomAuthenticationProvider(customUserDetailsService, passwordEncoder);
+        return new CustomAuthenticationProvider(customUserDetailsService, passwordEncoder, loginAttemptService);
     }
 
     /**

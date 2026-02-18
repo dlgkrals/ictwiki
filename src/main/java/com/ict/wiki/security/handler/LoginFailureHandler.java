@@ -55,7 +55,7 @@ public class LoginFailureHandler implements AuthenticationFailureHandler {
         if (exception instanceof UsernameNotFoundException) {
             return "존재하지 않는 계정이거나 비활성화된 계정입니다";
         } else if (exception instanceof BadCredentialsException) {
-            return "비밀번호가 일치하지 않습니다";
+            return exception.getMessage();
         } else {
             return "로그인에 실패했습니다";
         }
