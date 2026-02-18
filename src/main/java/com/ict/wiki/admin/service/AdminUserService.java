@@ -1,5 +1,6 @@
 package com.ict.wiki.admin.service;
 
+import com.ict.wiki.admin.dto.response.UserManagementResponse;
 import com.ict.wiki.login.domain.Role;
 import com.ict.wiki.login.domain.User;
 import com.ict.wiki.login.repository.UserRepository;
@@ -31,8 +32,10 @@ public class AdminUserService {
     /**
      * 전체 회원 목록
      */
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public List<UserManagementResponse> getAllUsers() {
+        return userRepository.findAll().stream()
+                .map(UserManagementResponse::from)
+                .toList();
     }
 
     /**

@@ -29,6 +29,9 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 
+	// ⭐ Spring Security 추가
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+
 	// 이메일 발송
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 
@@ -37,9 +40,6 @@ dependencies {
 
 	// Guava Cache (로그인 시도 관리)
 	implementation 'com.google.guava:guava:33.0.0-jre'
-
-	//세션 관리
-	implementation 'org.springframework.session:spring-session-core'
 
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'com.mysql:mysql-connector-j'
