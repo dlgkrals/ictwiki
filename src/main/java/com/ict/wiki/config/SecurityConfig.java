@@ -63,6 +63,7 @@ public class SecurityConfig {
         log.info("Spring Security 설정 초기화 시작");
 
         http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 // 커스텀 AuthenticationProvider 등록
                 .authenticationProvider(customAuthenticationProvider())
 
