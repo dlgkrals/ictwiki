@@ -6,6 +6,8 @@ import com.ict.wiki.security.auth.CustomUserDetailsService;
 import com.ict.wiki.security.filter.JsonAuthenticationFilter;
 import com.ict.wiki.security.handler.LoginFailureHandler;
 import com.ict.wiki.security.handler.LoginSuccessHandler;
+import com.ict.wiki.security.handler.RestAccessDeniedHandler;
+import com.ict.wiki.security.handler.RestAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -51,6 +53,9 @@ public class SecurityConfig {
     private final LoginFailureHandler loginFailureHandler;
     private final PasswordEncoder passwordEncoder;
     private final LoginAttemptService loginAttemptService;
+
+    private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
+    private final RestAccessDeniedHandler restAccessDeniedHandler;
 
     @Value("${app.csp.connect-src}")
     private String connectSrc;
@@ -124,6 +129,10 @@ public class SecurityConfig {
                         .addHeaderWriter(new StaticHeadersWriter("Content-Security-Policy",
                                 "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; " +
                                         "img-src 'self' data:; font-src 'self'; connect-src " + connectSrc + ";"))
+                )
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(restAuthenticationEntryPoint)
+                        .accessDeniedHandler(restAccessDeniedHandler)
                 );
 
 
