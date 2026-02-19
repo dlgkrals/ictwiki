@@ -2,6 +2,7 @@ package com.ict.wiki.admin.controller;
 
 import com.ict.wiki.admin.dto.response.UserManagementResponse;
 import com.ict.wiki.admin.service.AdminUserService;
+import com.ict.wiki.login.domain.Role;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +16,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/admin/users")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")  // ⭐ 클래스 레벨: 모든 API는 관리자만 접근
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminUserController {
 
     private final AdminUserService adminUserService;
@@ -68,5 +69,30 @@ public class AdminUserController {
     public ResponseEntity<Map<String, String>> deleteUser(@PathVariable Long userId) {
         adminUserService.deleteUser(userId);
         return ResponseEntity.ok(Map.of("message", "사용자가 삭제되었습니다."));
+    }
+
+    /**
+     * 사용자 비밀번호 강제 변경
+     * PUT /api/admin/users/{userId}/password
+     */
+    @PutMapping("/{userId}/password")
+    public ResponseEntity<Map<String, String>> changePassword(
+            @PathVariable Long userId,
+            @RequestBody Map<String, String> request) {
+        adminUserService.changePassword(userId, request.get("password"));
+        return ResponseEntity.ok(Map.of("message", "비밀번호가 변경되었습니다."));
+    }
+
+    /**
+     * 사용자 역할 변경
+     * PUT /api/admin/users/{userId}/role
+     */
+    @PutMapping("/{userId}/role")
+    public ResponseEntity<Map<String, String>> changeRole(
+            @PathVariable Long userId,
+            @RequestBody Map<String, String> request) {
+        Role newRole = Role.valueOf(request.get("role"));
+        adminUserService.changeRole(userId, newRole);
+        return ResponseEntity.ok(Map.of("message", "역할이 변경되었습니다."));
     }
 }
