@@ -105,19 +105,6 @@ public class AuthController {
         ));
     }
 
-    // ⭐⭐⭐ /login 엔드포인트 완전 제거! ⭐⭐⭐
-    // → JsonAuthenticationFilter가 처리함
-
-    /**
-     * 로그아웃
-     * ⭐ Security가 처리하도록 변경 예정 (현재는 유지)
-     */
-    @PostMapping("/logout")
-    public ResponseEntity<String> logout(HttpSession session) {
-        session.invalidate();
-        return ResponseEntity.ok("로그아웃되었습니다");
-    }
-
     /**
      * 현재 로그인한 사용자 정보 조회
      */

@@ -9,6 +9,7 @@ import com.ict.wiki.security.handler.LoginSuccessHandler;
 import com.ict.wiki.security.handler.RestAccessDeniedHandler;
 import com.ict.wiki.security.handler.RestAuthenticationEntryPoint;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -147,6 +148,17 @@ public class SecurityConfig {
                 )
                 .rememberMe(remember -> remember
                         .rememberMeServices(rememberMeServices())
+                )
+                .logout(logout -> logout
+                        .logoutUrl("/api/auth/logout")
+                        .logoutSuccessHandler((request, response, authentication) -> {
+                            response.setStatus(HttpServletResponse.SC_OK);
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.getWriter().write("\"로그아웃되었습니다\"");
+                        })
+                        .invalidateHttpSession(true)       // 세션 무효화
+                        .clearAuthentication(true)         // SecurityContext 초기화
+                        .deleteCookies("JSESSIONID", "REMEMBER_ME", "XSRF-TOKEN")  // 쿠키 삭제
                 );
 
 
