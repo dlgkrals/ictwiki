@@ -8,8 +8,10 @@ import com.ict.wiki.security.handler.LoginFailureHandler;
 import com.ict.wiki.security.handler.LoginSuccessHandler;
 import com.ict.wiki.security.handler.RestAccessDeniedHandler;
 import com.ict.wiki.security.handler.RestAuthenticationEntryPoint;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,6 +24,9 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
+import org.springframework.security.web.authentication.rememberme.PersistentTokenBasedRememberMeServices;
+import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
@@ -32,6 +37,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import javax.sql.DataSource;
 import java.util.Arrays;
 import java.util.List;
 
@@ -57,8 +63,13 @@ public class SecurityConfig {
     private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
     private final RestAccessDeniedHandler restAccessDeniedHandler;
 
+    private final DataSource dataSource;
+
     @Value("${app.csp.connect-src}")
     private String connectSrc;
+
+    @Value("${app.remember-me.key}")
+    private String rememberMeKey;
 
     /**
      * Security 필터 체인 설정
@@ -133,6 +144,9 @@ public class SecurityConfig {
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(restAuthenticationEntryPoint)
                         .accessDeniedHandler(restAccessDeniedHandler)
+                )
+                .rememberMe(remember -> remember
+                        .rememberMeServices(rememberMeServices())
                 );
 
 
@@ -167,6 +181,7 @@ public class SecurityConfig {
         filter.setAuthenticationFailureHandler(loginFailureHandler);
 
         filter.setSecurityContextRepository(new HttpSessionSecurityContextRepository());
+        filter.setRememberMeServices(rememberMeServices());
 
         log.info("JsonAuthenticationFilter 등록 완료");
         return filter;
@@ -189,5 +204,30 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
+    }
+
+    @Bean
+    public PersistentTokenRepository persistentTokenRepository() {
+        JdbcTokenRepositoryImpl repo = new JdbcTokenRepositoryImpl();
+        repo.setDataSource(dataSource);
+        return repo;
+    }
+
+    @Bean
+    public PersistentTokenBasedRememberMeServices rememberMeServices() {
+        PersistentTokenBasedRememberMeServices services =
+                new PersistentTokenBasedRememberMeServices(
+                        rememberMeKey,
+                        customUserDetailsService,
+                        persistentTokenRepository()
+                ) {
+                    @Override
+                    protected boolean rememberMeRequested(HttpServletRequest request, String parameter) {
+                        return "true".equals(request.getAttribute("rememberMe"));
+                    }
+                };
+        services.setTokenValiditySeconds(30 * 24 * 60 * 60);
+        services.setCookieName("REMEMBER_ME");
+        return services;
     }
 }

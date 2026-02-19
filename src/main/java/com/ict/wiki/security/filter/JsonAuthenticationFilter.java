@@ -106,6 +106,11 @@ public class JsonAuthenticationFilter extends AbstractAuthenticationProcessingFi
         UsernamePasswordAuthenticationToken authRequest =
                 new UsernamePasswordAuthenticationToken(email, password);
 
+        //request attribute에 rememberMe 저장 (RememberMeServices가 읽음)
+        if (loginRequest.isRememberMe()) {
+            request.setAttribute("rememberMe", "true");
+        }
+
         // 4. AuthenticationManager에게 인증 위임
         return this.getAuthenticationManager().authenticate(authRequest);
     }
