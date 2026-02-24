@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -33,6 +34,10 @@ public class UserService {
     private final Cache<String, List<User>> staffCache = CacheBuilder.newBuilder()
             .maximumSize(1)  // STAFF 목록 1개만
             .build();
+
+    private static final List<Role> WORKER_ROLES = Arrays.stream(Role.values())
+            .filter(role -> role != Role.ADMIN)
+            .toList();
 
     /**
      * 이메일로 사용자 조회
@@ -77,7 +82,7 @@ public class UserService {
         log.info("사용자 저장 완료 - UserId: {}, Email: {}", savedUser.getId(), savedUser.getEmail());
 
         // STAFF 역할이면 캐시 무효화
-        if (user.getRole() == Role.STAFF) {
+        if (WORKER_ROLES.contains(user.getRole())) {
             clearStaffCache();
         }
 
@@ -146,11 +151,11 @@ public class UserService {
         try {
             return staffCache.get("staff", () -> {
                 log.info("🔵 DB에서 STAFF 목록 조회 (캐시 미스)");
-                return userRepository.findByRole(Role.STAFF);
+                return userRepository.findByRoleIn(WORKER_ROLES);
             });
         } catch (ExecutionException e) {
             log.error("STAFF 캐시 조회 실패, DB에서 직접 조회", e);
-            return userRepository.findByRole(Role.STAFF);
+            return userRepository.findByRoleIn(WORKER_ROLES);
         }
     }
 
@@ -178,8 +183,7 @@ public class UserService {
         // 역할 변경 로직
          user.updateRole(newRole);
 
-        // STAFF 관련 역할 변경 시 캐시 무효화
-        if (oldRole == Role.STAFF || newRole == Role.STAFF) {
+        if (WORKER_ROLES.contains(oldRole) || WORKER_ROLES.contains(newRole)) {
             clearStaffCache();
         }
 
@@ -199,8 +203,7 @@ public class UserService {
 
         userRepository.deleteById(userId);
 
-        // STAFF였다면 캐시 무효화
-        if (user.getRole() == Role.STAFF) {
+        if (WORKER_ROLES.contains(user.getRole())) {
             clearStaffCache();
         }
 

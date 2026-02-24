@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -94,5 +95,21 @@ public class AdminUserController {
         Role newRole = Role.valueOf(request.get("role"));
         adminUserService.changeRole(userId, newRole);
         return ResponseEntity.ok(Map.of("message", "역할이 변경되었습니다."));
+    }
+
+    /**
+     * 역할 목록 조회
+     * GET /api/admin/users/roles
+     */
+    @GetMapping("/roles")
+    public ResponseEntity<List<Map<String, String>>> getRoles() {
+        List<Map<String, String>> roles = Arrays.stream(Role.values())
+                .map(role -> Map.of(
+                        "code", role.name(),
+                        "displayName", role.getDisplayName()
+                ))
+                .toList();
+
+        return ResponseEntity.ok(roles);
     }
 }

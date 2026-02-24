@@ -29,6 +29,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT u FROM User u WHERE u.role = :role ORDER BY u.name")
     List<User> findByRole(@Param("role") Role role);
 
+    @Query("SELECT u FROM User u WHERE u.role IN :roles ORDER BY u.name")
+    List<User> findByRoleIn(@Param("roles") List<Role> roles);
+
+    long countByRoleIn(List<Role> roles);
+
     /**
      * 승인 대기 회원 목록
      */

@@ -11,6 +11,7 @@ import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +27,10 @@ public class AdminUserService {
 
     private final UserRepository userRepository;
     private final UserService userService;
+
+    private static final List<Role> WORKER_ROLES = Arrays.stream(Role.values())
+            .filter(role -> role != Role.ADMIN)
+            .toList();
 
     // ========== 회원 조회 ==========
 
@@ -184,14 +189,14 @@ public class AdminUserService {
         long totalUsers = userRepository.count();
         long activeUsers = userRepository.countByActiveTrue();
         long pendingUsers = userRepository.countByApprovedFalse();
-        long staffCount = userRepository.countByRole(Role.STAFF);
+        long workerCount = userRepository.countByRoleIn(WORKER_ROLES);
         long adminCount = userRepository.countByRole(Role.ADMIN);
 
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalUsers", totalUsers);
         stats.put("activeUsers", activeUsers);
         stats.put("pendingUsers", pendingUsers);
-        stats.put("staffCount", staffCount);
+        stats.put("workerCount", workerCount);
         stats.put("adminCount", adminCount);
 
         return stats;

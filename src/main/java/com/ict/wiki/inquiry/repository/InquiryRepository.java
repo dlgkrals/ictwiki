@@ -15,6 +15,9 @@ import java.util.List;
 @Repository
 public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
 
+    @Query("SELECT i FROM Inquiry i WHERE i.worker.id = :workerId AND i.workDate = :date")
+    List<Inquiry> findByWorkerIdAndWorkDate(@Param("workerId") Long workerId, @Param("date") LocalDate date);
+
     /**
      * 전체 민원 조회 (최신순, fetch join)
      */
