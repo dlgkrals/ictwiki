@@ -7,6 +7,7 @@ import com.ict.wiki.inquiry.domain.InquiryType;
 import com.ict.wiki.inquiry.dto.request.*;
 import com.ict.wiki.inquiry.dto.response.BuildingResponse;
 import com.ict.wiki.inquiry.dto.response.InquiryResponse;
+import com.ict.wiki.inquiry.dto.response.InquiryStatusResponse;
 import com.ict.wiki.inquiry.dto.response.InquirySummaryResponse;
 import com.ict.wiki.inquiry.service.InquiryService;
 import com.ict.wiki.security.auth.CustomUserDetails;
@@ -50,6 +51,23 @@ public class InquiryController {
                 .toList();
 
         return ResponseEntity.ok(buildings);
+    }
+
+    /**
+     * 드롭다운 상태 목록 조회
+     * GET /api/inquiries/status/options
+     */
+    @GetMapping("/status/options")
+    public ResponseEntity<List<InquiryStatusResponse>> getDropdownOptions() {
+        List<InquiryStatusResponse> options = InquiryStatus.getDropdownOptions()
+                .stream()
+                .map(status -> new InquiryStatusResponse(
+                        status.name(),          // code: "PENDING"
+                        status.getDescription() // displayName: "시작 전"
+                ))
+                .toList();
+
+        return ResponseEntity.ok(options);
     }
 
     /**

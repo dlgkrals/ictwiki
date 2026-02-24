@@ -230,7 +230,7 @@ public class InquiryStatsService {
         // 평균 통계 계산
         Double avgDailyCount = calculateAvgDailyCount(totalCount);
         Double avgMonthlyCount = calculateAvgMonthlyCount(totalCount);
-        Double avgProcessingDays = inquiryRepository.getAvgProcessingDays();
+        Double avgProcessingDays = inquiryRepository.getAvgProcessingHours();
 
         return InquiryDashboardStatsResponse.builder()
                 .totalCount(totalCount)

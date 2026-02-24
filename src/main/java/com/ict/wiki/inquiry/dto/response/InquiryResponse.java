@@ -24,7 +24,6 @@ public class InquiryResponse {
     // 작업자 정보
     private Long workerId;
     private String workerName;
-    private LocalDate workDate;
     private InquiryMethod method;
 
     // 민원 내용
@@ -54,7 +53,6 @@ public class InquiryResponse {
                 .status(inquiry.getStatus())
                 .workerId(inquiry.getWorker() != null ? inquiry.getWorker().getId() : null)
                 .workerName(inquiry.getWorker() != null ? inquiry.getWorker().getName() : null)
-                .workDate(inquiry.getWorkDate())
                 .method(inquiry.getMethod())
                 .description(inquiry.getDescription())
                 .solution(inquiry.getSolution())

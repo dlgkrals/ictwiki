@@ -43,7 +43,6 @@ public class InquirySaveRequest {
     // ===== 선택 항목 (생성 시 nullable, 수정 시 사용) =====
     private InquiryStatus status;
     private Long workerId;
-    private LocalDate workDate;
     private InquiryMethod method;
     private String solution;
 }

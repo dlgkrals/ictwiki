@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * 민원/작업 요청 엔티티
@@ -60,10 +61,10 @@ public class Inquiry extends BaseEntity {
     private User worker;
 
     /**
-     * 작업 날짜
+     * 완료 날짜
      */
     @Column
-    private LocalDate workDate;
+    private LocalDateTime completedAt;
 
     /**
      * 처리 방식 (원격/방문)
@@ -110,27 +111,19 @@ public class Inquiry extends BaseEntity {
      * 민원 전체 수정
      */
     public void update(String title, InquiryType type, InquiryStatus status,
-                       User worker, LocalDate workDate, InquiryMethod method,
+                       User worker, InquiryMethod method,
                        String description, String solution, String requester,
                        Building building, Integer roomNumber) {
         this.title = title;
         this.type = type;
         this.status = status;
         this.worker = worker;
-        this.workDate = workDate;
         this.method = method;
         this.description = description;
         this.solution = solution;
         this.requester = requester;
         this.building = building;
         this.roomNumber = roomNumber;
-    }
-
-    /**
-     * 상태만 변경
-     */
-    public void updateStatus(InquiryStatus status) {
-        this.status = status;
     }
 
     /**
@@ -146,16 +139,6 @@ public class Inquiry extends BaseEntity {
     }
 
     /**
-     * 작업 완료
-     * - 해결 방법 작성 + 상태 '완료' + 작업 날짜 자동 설정
-     */
-    public void complete(String solution) {
-        this.solution = solution;
-        this.status = InquiryStatus.COMPLETED;
-        this.workDate = LocalDate.now();
-    }
-
-    /**
      * 보류 처리
      */
     public void hold(String reason) {
@@ -164,5 +147,13 @@ public class Inquiry extends BaseEntity {
         if (this.solution == null || this.solution.isEmpty()) {
             this.solution = "[보류] " + reason;
         }
+    }
+
+    /**
+     * 완료 처리
+     */
+    public void complete() {
+        this.status = InquiryStatus.COMPLETED;
+        this.completedAt = LocalDateTime.now();
     }
 }

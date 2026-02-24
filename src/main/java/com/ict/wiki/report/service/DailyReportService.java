@@ -57,7 +57,7 @@ public class DailyReportService {
         sheet.setColumnWidth(7, 2602);
         sheet.setColumnWidth(8, 2602);
 
-        List<Inquiry> allInquiries = inquiryRepository.findByWorkerIdAndWorkDate(user.getId(), date);
+        List<Inquiry> allInquiries = inquiryRepository.findByWorkerIdAndDate(user.getId(), date);
         List<Inquiry> allSection = allInquiries.stream()
                 .filter(i -> i.getStatus() == InquiryStatus.COMPLETED
                         || i.getStatus() == InquiryStatus.IN_PROGRESS)

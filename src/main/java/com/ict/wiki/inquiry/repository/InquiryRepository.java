@@ -15,8 +15,8 @@ import java.util.List;
 @Repository
 public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
 
-    @Query("SELECT i FROM Inquiry i WHERE i.worker.id = :workerId AND i.workDate = :date")
-    List<Inquiry> findByWorkerIdAndWorkDate(@Param("workerId") Long workerId, @Param("date") LocalDate date);
+    @Query("SELECT i FROM Inquiry i LEFT JOIN FETCH i.worker WHERE i.worker.id = :workerId AND FUNCTION('DATE', i.createdAt) = :date")
+    List<Inquiry> findByWorkerIdAndDate(@Param("workerId") Long workerId, @Param("date") LocalDate date);
 
     /**
      * 전체 민원 조회 (최신순, fetch join)
@@ -182,12 +182,11 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
     // ========== 평균 통계 ==========
 
     /**
-     * 완료된 민원의 평균 처리 시간 (일)
+     * 완료된 민원의 평균 처리 시간
      */
-    @Query("SELECT AVG(DATEDIFF(i.workDate, FUNCTION('DATE', i.createdAt))) " +
-            "FROM Inquiry i " +
-            "WHERE i.status = 'COMPLETED' AND i.workDate IS NOT NULL")
-    Double getAvgProcessingDays();
+    @Query("SELECT AVG(timestampdiff(MINUTE, i.createdAt, i.completedAt)) / 60.0 " +
+            "FROM Inquiry i WHERE i.status = 'COMPLETED' AND i.completedAt IS NOT NULL")
+    Double getAvgProcessingHours();
 
     /**
      * 전체 민원 수

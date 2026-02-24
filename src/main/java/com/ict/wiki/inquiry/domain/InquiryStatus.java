@@ -2,33 +2,31 @@ package com.ict.wiki.inquiry.domain;
 
 import lombok.Getter;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * 민원 상태
  * - 프론트엔드 INQUIRY_STATUS와 매칭
  */
 @Getter
 public enum InquiryStatus {
-    PENDING("시작 전"),
-    IN_PROGRESS("진행 중"),
-    COMPLETED("완료"),
-    ON_HOLD("보류");
+    PENDING("시작 전", true),
+    IN_PROGRESS("진행 중", true),
+    ON_HOLD("보류", true),
+    COMPLETED("완료", false);  // 드롭다운에서 숨김
 
     private final String description;
+    private final boolean dropdownVisible;
 
-    InquiryStatus(String description) {
+    InquiryStatus(String description, boolean dropdownVisible) {
         this.description = description;
+        this.dropdownVisible = dropdownVisible;
     }
 
-    /**
-     * 한글 이름으로 Enum 찾기
-     * 예: "시작 전" → InquiryStatus.PENDING
-     */
-    public static InquiryStatus fromDescription(String description) {
-        for (InquiryStatus status : values()) {
-            if (status.description.equals(description)) {
-                return status;
-            }
-        }
-        throw new IllegalArgumentException("잘못된 상태입니다: " + description);
+    public static List<InquiryStatus> getDropdownOptions() {
+        return Arrays.stream(values())
+                .filter(InquiryStatus::isDropdownVisible)
+                .toList();
     }
 }

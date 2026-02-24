@@ -49,7 +49,6 @@ public class InquiryService {
                 .building(building)
                 .roomNumber(request.getRoomNumber())
                 .status(request.getStatus() != null ? request.getStatus() : InquiryStatus.PENDING)
-                .workDate(request.getWorkDate())
                 .solution(request.getSolution())
                 .build();
 
@@ -173,7 +172,6 @@ public class InquiryService {
                 request.getType(),
                 request.getStatus() != null ? request.getStatus() : InquiryStatus.PENDING,
                 worker,
-                request.getWorkDate(),
                 request.getMethod(),
                 request.getDescription(),
                 request.getSolution(),
