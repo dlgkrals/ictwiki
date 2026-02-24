@@ -15,7 +15,9 @@ import java.util.List;
 @Repository
 public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
 
-    @Query("SELECT i FROM Inquiry i LEFT JOIN FETCH i.worker WHERE i.worker.id = :workerId AND FUNCTION('DATE', i.createdAt) = :date")
+    @Query("SELECT i FROM Inquiry i LEFT JOIN FETCH i.worker WHERE i.worker.id = :workerId AND " +
+            "(FUNCTION('DATE', i.completedAt) = :date OR " +
+            "(i.status = com.ict.wiki.inquiry.domain.InquiryStatus.IN_PROGRESS AND FUNCTION('DATE', i.createdAt) = :date))")
     List<Inquiry> findByWorkerIdAndDate(@Param("workerId") Long workerId, @Param("date") LocalDate date);
 
     /**

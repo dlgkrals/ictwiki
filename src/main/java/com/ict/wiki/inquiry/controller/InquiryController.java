@@ -278,6 +278,16 @@ public class InquiryController {
         return ResponseEntity.ok(Map.of("message", "민원이 삭제되었습니다"));
     }
 
+    /**
+     * 민원 완료 처리
+     * PATCH /api/inquiries/{id}/complete
+     */
+    @PatchMapping("/{id}/complete")
+    public ResponseEntity<Void> completeInquiry(@PathVariable Long id) {
+        inquiryService.complete(id);
+        return ResponseEntity.ok().build();
+    }
+
     // ========== 통계 ==========
 
     /**

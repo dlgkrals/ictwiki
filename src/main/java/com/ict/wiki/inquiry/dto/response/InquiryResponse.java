@@ -37,7 +37,8 @@ public class InquiryResponse {
     private String formattedRoom;  // "502 호" 형식
 
     // 시간 정보
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt;   // 작업 접수 시간
+    private LocalDateTime completedAt; // 작업 완료 시간
     private LocalDateTime modifiedAt;
     private String createdBy;
     private String modifiedBy;
@@ -61,6 +62,7 @@ public class InquiryResponse {
                 .buildingName(inquiry.getBuilding() != null ? inquiry.getBuilding().getDisplayName() : null)
                 .formattedRoom(inquiry.getRoomNumber() != null ? inquiry.getRoomNumber() + " 호" : null)
                 .createdAt(inquiry.getCreatedAt())
+                .completedAt(inquiry.getCompletedAt())
                 .modifiedAt(inquiry.getModifiedAt())
                 .createdBy(inquiry.getCreatedBy())
                 .modifiedBy(inquiry.getModifiedBy())

@@ -131,7 +131,7 @@ public class DailyReportService {
                 setCell(dr, 5, "", styleDataL);
                 setCell(dr, 6, "", styleDataL);
                 merge(sheet, rowNum - 1, rowNum - 1, 4, 6);
-                setCell(dr, 7, "", styleDataC);
+                setCell(dr, 7, inq.getCompletedAt() != null ? inq.getCompletedAt().format(DateTimeFormatter.ofPattern("HH:mm")) : "", styleDataC);
                 setCell(dr, 8, inq.getStatus().getDescription(), styleDataC);
             } else {
                 setCell(dr, 0, "", styleDataC);

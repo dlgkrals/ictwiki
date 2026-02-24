@@ -5,6 +5,7 @@ import com.ict.wiki.inquiry.dto.request.InquirySaveRequest;
 import com.ict.wiki.inquiry.repository.InquiryRepository;
 import com.ict.wiki.login.domain.User;
 import com.ict.wiki.login.service.UserService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -194,6 +195,13 @@ public class InquiryService {
 
         log.info("민원 보류 - ID: {}, Reason: {}", id, reason);
         return inquiry;
+    }
+
+    public void complete(Long id) {
+        Inquiry inquiry = inquiryRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("민원을 찾을 수 없습니다: " + id));
+
+        inquiry.complete(); // 엔티티에 위임
     }
 
     // ========== 삭제 ==========
