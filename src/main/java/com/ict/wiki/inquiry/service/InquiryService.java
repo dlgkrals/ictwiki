@@ -197,6 +197,7 @@ public class InquiryService {
         return inquiry;
     }
 
+    @Transactional
     public void complete(Long id) {
         Inquiry inquiry = inquiryRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("민원을 찾을 수 없습니다: " + id));
