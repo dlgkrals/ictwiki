@@ -20,34 +20,40 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
             "(i.status = com.ict.wiki.inquiry.domain.InquiryStatus.IN_PROGRESS AND FUNCTION('DATE', i.createdAt) = :date))")
     List<Inquiry> findByWorkerIdAndDate(@Param("workerId") Long workerId, @Param("date") LocalDate date);
 
+    @Query("SELECT i FROM Inquiry i LEFT JOIN FETCH i.worker LEFT JOIN FETCH i.subWorker " +
+            "WHERE (i.worker.id = :workerId OR i.subWorker.id = :workerId) " +
+            "AND FUNCTION('DATE', i.createdAt) = :date")
+    List<Inquiry> findByWorkerOrSubWorkerAndDate(@Param("workerId") Long workerId, @Param("date") LocalDate date);
+
     /**
      * 전체 민원 조회 (최신순, fetch join)
      */
-    @Query("SELECT i FROM Inquiry i LEFT JOIN FETCH i.worker ORDER BY i.createdAt DESC")
+    @Query("SELECT i FROM Inquiry i LEFT JOIN FETCH i.worker LEFT JOIN FETCH i.subWorker ORDER BY i.createdAt DESC")
     List<Inquiry> findAllWithWorker();
 
     /**
      * 최근 N개 민원 (홈 페이지용)
      */
-    @Query("SELECT i FROM Inquiry i LEFT JOIN FETCH i.worker ORDER BY i.createdAt DESC LIMIT :limit")
+    @Query("SELECT i FROM Inquiry i LEFT JOIN FETCH i.worker LEFT JOIN FETCH i.subWorker ORDER BY i.createdAt DESC LIMIT :limit")
     List<Inquiry> findRecentInquiries(@Param("limit") int limit);
+
 
     /**
      * 상태별 조회
      */
-    @Query("SELECT i FROM Inquiry i LEFT JOIN FETCH i.worker WHERE i.status = :status ORDER BY i.createdAt DESC")
+    @Query("SELECT i FROM Inquiry i LEFT JOIN FETCH i.worker LEFT JOIN FETCH i.subWorker WHERE i.status = :status ORDER BY i.createdAt DESC")
     List<Inquiry> findByStatus(@Param("status") InquiryStatus status);
 
     /**
      * 유형별 조회
      */
-    @Query("SELECT i FROM Inquiry i LEFT JOIN FETCH i.worker WHERE i.type = :type ORDER BY i.createdAt DESC")
+    @Query("SELECT i FROM Inquiry i LEFT JOIN FETCH i.worker LEFT JOIN FETCH i.subWorker WHERE i.type = :type ORDER BY i.createdAt DESC")
     List<Inquiry> findByType(@Param("type") InquiryType type);
 
     /**
      * 작업자별 조회 (내가 담당한 민원)
      */
-    @Query("SELECT i FROM Inquiry i LEFT JOIN FETCH i.worker WHERE i.worker.id = :workerId ORDER BY i.createdAt DESC")
+    @Query("SELECT i FROM Inquiry i LEFT JOIN FETCH i.worker LEFT JOIN FETCH i.subWorker WHERE i.worker.id = :workerId ORDER BY i.createdAt DESC")
     List<Inquiry> findByWorkerId(@Param("workerId") Long workerId);
 
     /**

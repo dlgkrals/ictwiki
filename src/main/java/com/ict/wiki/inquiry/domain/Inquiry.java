@@ -61,6 +61,15 @@ public class Inquiry extends BaseEntity {
     private User worker;
 
     /**
+     * 보조 작업자 (User FK)
+     * - 배정 전에는 null
+     * 업무 보고 엑셀에 같이 한 작업도 포함되게 하기 위함
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sub_worker_id")
+    private User subWorker;
+
+    /**
      * 완료 날짜
      */
     @Column
@@ -136,6 +145,20 @@ public class Inquiry extends BaseEntity {
         if (this.status == InquiryStatus.PENDING) {
             this.status = InquiryStatus.IN_PROGRESS;
         }
+    }
+
+    /**
+     * 보조 작업자 배정
+     */
+    public void assignSubWorker(User subWorker) {
+        this.subWorker = subWorker;
+    }
+
+    /**
+     * 보조 작업자 해제
+     */
+    public void removeSubWorker() {
+        this.subWorker = null;
     }
 
     /**

@@ -24,6 +24,8 @@ public class InquirySummaryResponse {
     // 작업자 정보
     private Long workerId;
     private String workerName;
+    private Long subWorkerId;
+    private String subWorkerName;
     private InquiryMethod method;
 
     // 요청자
@@ -48,6 +50,8 @@ public class InquirySummaryResponse {
                 .status(inquiry.getStatus())
                 .workerId(inquiry.getWorker() != null ? inquiry.getWorker().getId() : null)
                 .workerName(inquiry.getWorker() != null ? inquiry.getWorker().getName() : null)
+                .subWorkerId(inquiry.getSubWorker() != null ? inquiry.getSubWorker().getId() : null)
+                .subWorkerName(inquiry.getSubWorker() != null ? inquiry.getSubWorker().getName() : null)
                 .method(inquiry.getMethod())
                 .requester(inquiry.getRequester())
                 .buildingCode(inquiry.getBuilding() != null ? inquiry.getBuilding().name() : null)

@@ -92,7 +92,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                         .sessionFixation().newSession()
-                        .maximumSessions(1)  // 동시 세션 1개
+                        .maximumSessions(2)  // 동시 세션 2개
                         .maxSessionsPreventsLogin(false)  // 새 로그인 시 기존 세션 무효화
                 )
 

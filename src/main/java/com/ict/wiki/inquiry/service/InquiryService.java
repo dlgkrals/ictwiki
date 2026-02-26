@@ -59,6 +59,12 @@ public class InquiryService {
             inquiry.assignWorker(worker, request.getMethod());
         }
 
+        // 보조 작업자 배정 (있으면)
+        if (request.getSubWorkerId() != null) {
+            User subWorker = userService.findById(request.getSubWorkerId());
+            inquiry.assignSubWorker(subWorker);
+        }
+
         Inquiry saved = inquiryRepository.save(inquiry);
         log.info("민원 생성 완료 - ID: {}, Title: {}", saved.getId(), request.getTitle());
         return saved;
@@ -161,6 +167,13 @@ public class InquiryService {
         if (request.getWorkerId() != null) {
             worker = userService.findById(request.getWorkerId());
         }
+
+        // 보조 작업자 수정
+        User subWorker = null;
+        if (request.getSubWorkerId() != null) {
+            subWorker = userService.findById(request.getSubWorkerId());
+        }
+        inquiry.assignSubWorker(subWorker);
 
         // 건물 코드 변환 (있으면)
         Building building = null;
