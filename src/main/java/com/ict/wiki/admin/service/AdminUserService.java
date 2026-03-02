@@ -109,6 +109,7 @@ public class AdminUserService {
 
         user.activate();
         userRepository.save(user);
+        userService.clearStaffCache();
 
         log.info("계정 활성화 - UserId: {}, Email: {}", userId, user.getEmail());
     }
@@ -122,6 +123,7 @@ public class AdminUserService {
 
         user.deactivate();
         userRepository.save(user);
+        userService.clearStaffCache();
 
         log.info("계정 비활성화 - UserId: {}, Email: {}", userId, user.getEmail());
     }
@@ -176,6 +178,7 @@ public class AdminUserService {
         user.deactivate();
         user.reject();
         userRepository.save(user);
+        userService.clearStaffCache();
 
         log.info("회원 삭제 (소프트) - UserId: {}, Email: {}", userId, user.getEmail());
     }
