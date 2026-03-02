@@ -7,6 +7,7 @@ import lombok.Getter;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 민원 상세 응답 DTO
@@ -34,9 +35,7 @@ public class InquiryResponse {
     private String requester;
 
     // 건물 및 호실 정보
-    private String buildingCode;
-    private String buildingName;
-    private String formattedRoom;  // "502 호" 형식
+    private List<LocationResponse> locations;
 
     // 시간 정보
     private LocalDateTime createdAt;   // 작업 접수 시간
@@ -62,9 +61,9 @@ public class InquiryResponse {
                 .description(inquiry.getDescription())
                 .solution(inquiry.getSolution())
                 .requester(inquiry.getRequester())
-                .buildingCode(inquiry.getBuilding() != null ? inquiry.getBuilding().name() : null)
-                .buildingName(inquiry.getBuilding() != null ? inquiry.getBuilding().getDisplayName() : null)
-                .formattedRoom(inquiry.getRoomNumber() != null ? inquiry.getRoomNumber() + " 호" : null)
+                .locations(inquiry.getLocations().stream()
+                        .map(LocationResponse::from)
+                        .toList())
                 .createdAt(inquiry.getCreatedAt())
                 .completedAt(inquiry.getCompletedAt())
                 .modifiedAt(inquiry.getModifiedAt())

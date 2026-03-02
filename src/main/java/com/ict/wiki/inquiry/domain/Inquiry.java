@@ -10,6 +10,8 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 민원/작업 요청 엔티티
@@ -101,18 +103,9 @@ public class Inquiry extends BaseEntity {
     @Column(nullable = false, length = 100)
     private String requester;
 
-    /**
-     * 건물
-     */
-    @Column(length = 50)
-    @Enumerated(EnumType.STRING)
-    private Building building;
-
-    /**
-     * 호실 (숫자만)
-     */
-    @Column
-    private Integer roomNumber;
+    @OneToMany(mappedBy = "inquiry", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<InquiryLocation> locations = new ArrayList<>();
 
     // ========== 비즈니스 메서드 ==========
 
@@ -121,8 +114,7 @@ public class Inquiry extends BaseEntity {
      */
     public void update(String title, InquiryType type, InquiryStatus status,
                        User worker, InquiryMethod method,
-                       String description, String solution, String requester,
-                       Building building, Integer roomNumber) {
+                       String description, String solution, String requester) {
         this.title = title;
         this.type = type;
         this.status = status;
@@ -131,8 +123,11 @@ public class Inquiry extends BaseEntity {
         this.description = description;
         this.solution = solution;
         this.requester = requester;
-        this.building = building;
-        this.roomNumber = roomNumber;
+    }
+
+    public void updateLocations(List<InquiryLocation> newLocations) {
+        this.locations.clear();
+        this.locations.addAll(newLocations);
     }
 
     /**

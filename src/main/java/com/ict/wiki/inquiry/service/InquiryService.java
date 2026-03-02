@@ -2,6 +2,7 @@ package com.ict.wiki.inquiry.service;
 
 import com.ict.wiki.inquiry.domain.*;
 import com.ict.wiki.inquiry.dto.request.InquirySaveRequest;
+import com.ict.wiki.inquiry.dto.request.LocationRequest;
 import com.ict.wiki.inquiry.repository.InquiryRepository;
 import com.ict.wiki.login.domain.User;
 import com.ict.wiki.login.service.UserService;
@@ -36,19 +37,12 @@ public class InquiryService {
      */
     @Transactional
     public Inquiry createInquiry(InquirySaveRequest request) {
-        // 건물 코드 변환 (있으면)
-        Building building = null;
-        if (request.getBuildingCode() != null && !request.getBuildingCode().isBlank()) {
-            building = Building.fromCode(request.getBuildingCode());
-        }
 
         Inquiry inquiry = Inquiry.builder()
                 .title(request.getTitle())
                 .type(request.getType())
                 .description(request.getDescription())
                 .requester(request.getRequester())
-                .building(building)
-                .roomNumber(request.getRoomNumber())
                 .status(request.getStatus() != null ? request.getStatus() : InquiryStatus.PENDING)
                 .solution(request.getSolution())
                 .build();
@@ -66,8 +60,18 @@ public class InquiryService {
         }
 
         Inquiry saved = inquiryRepository.save(inquiry);
+
+        saved.updateLocations(buildLocations(saved, request.getLocations()));
+
         log.info("민원 생성 완료 - ID: {}, Title: {}", saved.getId(), request.getTitle());
         return saved;
+    }
+
+    private List<InquiryLocation> buildLocations(Inquiry inquiry, List<LocationRequest> requests) {
+        if (requests == null) return List.of();
+        return requests.stream()
+                .map(l -> InquiryLocation.of(inquiry, l.getBuilding(), l.getRoomNumber(), l.getRoomName()))
+                .toList();
     }
 
     // ========== 조회 ==========
@@ -175,11 +179,7 @@ public class InquiryService {
         }
         inquiry.assignSubWorker(subWorker);
 
-        // 건물 코드 변환 (있으면)
-        Building building = null;
-        if (request.getBuildingCode() != null && !request.getBuildingCode().isBlank()) {
-            building = Building.fromCode(request.getBuildingCode());
-        }
+
 
         inquiry.update(
                 request.getTitle(),
@@ -189,24 +189,12 @@ public class InquiryService {
                 request.getMethod(),
                 request.getDescription(),
                 request.getSolution(),
-                request.getRequester(),
-                building,                    // ← 추가
-                request.getRoomNumber()      // ← 추가
+                request.getRequester()
         );
 
+        inquiry.updateLocations(buildLocations(inquiry, request.getLocations()));
+
         log.info("민원 수정 완료 - ID: {}, Title: {}", id, request.getTitle());
-        return inquiry;
-    }
-
-    /**
-     * 보류 처리
-     */
-    @Transactional
-    public Inquiry hold(Long id, String reason) {
-        Inquiry inquiry = findById(id);
-        inquiry.hold(reason);
-
-        log.info("민원 보류 - ID: {}, Reason: {}", id, reason);
         return inquiry;
     }
 
@@ -217,6 +205,8 @@ public class InquiryService {
 
         inquiry.complete(); // 엔티티에 위임
     }
+
+
 
     // ========== 삭제 ==========
 
