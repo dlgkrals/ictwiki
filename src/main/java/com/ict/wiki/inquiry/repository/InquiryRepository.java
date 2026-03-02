@@ -20,7 +20,7 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
             "(i.status = com.ict.wiki.inquiry.domain.InquiryStatus.IN_PROGRESS AND FUNCTION('DATE', i.createdAt) = :date))")
     List<Inquiry> findByWorkerIdAndDate(@Param("workerId") Long workerId, @Param("date") LocalDate date);
 
-    @Query("SELECT i FROM Inquiry i LEFT JOIN FETCH i.worker LEFT JOIN FETCH i.subWorker " +
+    @Query("SELECT DISTINCT i FROM Inquiry i LEFT JOIN FETCH i.worker LEFT JOIN FETCH i.subWorker LEFT JOIN FETCH i.locations " +
             "WHERE (i.worker.id = :workerId OR i.subWorker.id = :workerId) " +
             "AND FUNCTION('DATE', i.createdAt) = :date")
     List<Inquiry> findByWorkerOrSubWorkerAndDate(@Param("workerId") Long workerId, @Param("date") LocalDate date);
@@ -28,7 +28,7 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
     /**
      * 전체 민원 조회 (최신순, fetch join)
      */
-    @Query("SELECT i FROM Inquiry i LEFT JOIN FETCH i.worker LEFT JOIN FETCH i.subWorker ORDER BY i.createdAt DESC")
+    @Query("SELECT DISTINCT i FROM Inquiry i LEFT JOIN FETCH i.worker LEFT JOIN FETCH i.subWorker LEFT JOIN FETCH i.locations ORDER BY i.createdAt DESC")
     List<Inquiry> findAllWithWorker();
 
     /**
@@ -184,7 +184,7 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
     /**
      * 건물별 민원 건수
      */
-    @Query("SELECT i.building, COUNT(i) FROM Inquiry i WHERE i.building IS NOT NULL GROUP BY i.building ORDER BY COUNT(i) DESC")
+    @Query("SELECT l.building, COUNT(l) FROM InquiryLocation l GROUP BY l.building ORDER BY COUNT(l) DESC")
     List<Object[]> countByBuilding();
 
     // ========== 평균 통계 ==========
