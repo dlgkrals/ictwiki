@@ -169,13 +169,13 @@ public class InquiryController {
      * GET /api/inquiries/my-assigned
      */
     @GetMapping("/my-assigned")
-    public ResponseEntity<List<InquirySummaryResponse>> getMyAssignedInquiries(
+    public ResponseEntity<List<InquiryResponse>> getMyAssignedInquiries(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         List<Inquiry> inquiries = inquiryService.findByWorkerId(userDetails.getId());
 
-        List<InquirySummaryResponse> response = inquiries.stream()
-                .map(InquirySummaryResponse::from)
+        List<InquiryResponse> response = inquiries.stream()
+                .map(InquiryResponse::from)
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(response);

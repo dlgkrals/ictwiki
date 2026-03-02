@@ -51,15 +51,26 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
     List<Inquiry> findByType(@Param("type") InquiryType type);
 
     /**
-     * 작업자별 조회 (내가 담당한 민원)
+     * 작업자별 조회 (내가 담당한 민원 - 주/보조 작업자 포함)
      */
-    @Query("SELECT i FROM Inquiry i LEFT JOIN FETCH i.worker LEFT JOIN FETCH i.subWorker WHERE i.worker.id = :workerId ORDER BY i.createdAt DESC")
+    @Query("SELECT DISTINCT i FROM Inquiry i " +
+            "LEFT JOIN FETCH i.worker " +
+            "LEFT JOIN FETCH i.subWorker " +
+            "LEFT JOIN FETCH i.locations " +
+            "WHERE (i.worker.id = :workerId OR i.subWorker.id = :workerId) " +
+            "ORDER BY i.createdAt DESC")
     List<Inquiry> findByWorkerId(@Param("workerId") Long workerId);
 
     /**
      * 작업자별 + 상태별 조회
      */
-    @Query("SELECT i FROM Inquiry i LEFT JOIN FETCH i.worker WHERE i.worker.id = :workerId AND i.status = :status ORDER BY i.createdAt DESC")
+    @Query("SELECT DISTINCT i FROM Inquiry i " +
+            "LEFT JOIN FETCH i.worker " +
+            "LEFT JOIN FETCH i.subWorker " +
+            "LEFT JOIN FETCH i.locations " +
+            "WHERE (i.worker.id = :workerId OR i.subWorker.id = :workerId) " +
+            "AND i.status = :status " +
+            "ORDER BY i.createdAt DESC")
     List<Inquiry> findByWorkerIdAndStatus(@Param("workerId") Long workerId, @Param("status") InquiryStatus status);
 
     /**
