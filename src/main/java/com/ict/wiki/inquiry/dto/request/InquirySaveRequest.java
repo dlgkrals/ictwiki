@@ -34,7 +34,6 @@ public class InquirySaveRequest {
     @NotBlank(message = "문제 설명을 입력하세요")
     private String description;
 
-    @NotBlank(message = "요청자를 입력하세요")
     private String requester;
 
     // ===== 선택 항목 (생성 시 nullable, 수정 시 사용) =====
