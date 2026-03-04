@@ -14,6 +14,7 @@ public enum InquiryStatus {
     PENDING("시작 전", true),
     IN_PROGRESS("진행 중", true),
     ON_HOLD("보류", true),
+    OVERNIGHT("야간", true),
     COMPLETED("완료", false);  // 드롭다운에서 숨김
 
     private final String description;
