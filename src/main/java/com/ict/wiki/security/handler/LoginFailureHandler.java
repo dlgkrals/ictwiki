@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
@@ -55,6 +56,8 @@ public class LoginFailureHandler implements AuthenticationFailureHandler {
         if (exception instanceof UsernameNotFoundException) {
             return "존재하지 않는 계정이거나 비활성화된 계정입니다";
         } else if (exception instanceof BadCredentialsException) {
+            return exception.getMessage();
+        } else if (exception instanceof DisabledException) {
             return exception.getMessage();
         } else {
             return "로그인에 실패했습니다";

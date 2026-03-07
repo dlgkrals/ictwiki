@@ -4,6 +4,7 @@ import com.ict.wiki.login.domain.User;
 import com.ict.wiki.login.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -39,13 +40,13 @@ public class CustomUserDetailsService implements UserDetailsService {
         // 비활성 계정 체크
         if (!user.isActive()) {
             log.warn("비활성 계정 로그인 시도 - Email: {}", username);
-            throw new UsernameNotFoundException("비활성화된 계정입니다");
+            throw new DisabledException("이메일 인증이 필요합니다");
         }
 
         // 승인되지 않은 계정 체크
         if (!user.isApproved()) {
             log.warn("미승인 계정 로그인 시도 - Email: {}", username);
-            throw new UsernameNotFoundException("승인 대기 중인 계정입니다");
+            throw new DisabledException("관리자 승인 대기 중입니다");
         }
 
         log.debug("사용자 조회 성공 - Email: {}, Role: {}", username, user.getRole());

@@ -46,11 +46,15 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
         }
 
         // 2. 사용자 조회
+        // 2. 사용자 조회
         CustomUserDetails userDetails;
         try {
             userDetails = (CustomUserDetails) userDetailsService.loadUserByUsername(email);
+        } catch (DisabledException e) {
+            // 비활성/미승인 계정은 실패 카운트 올리지 않고 그대로 전달
+            throw e;
         } catch (Exception e) {
-            // ⭐ 사용자 없음 → 실패 기록
+            // 이메일 없음 → 실패 카운트
             loginAttemptService.loginFailed(email);
             handleLoginFailure(email);
             throw e;
