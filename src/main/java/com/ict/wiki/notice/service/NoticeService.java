@@ -1,5 +1,7 @@
 package com.ict.wiki.notice.service;
 
+import com.ict.wiki.exception.code.NoticeErrorCode;
+import com.ict.wiki.exception.custom.NoticeException;
 import com.ict.wiki.notice.domain.Notice;
 import com.ict.wiki.notice.repository.NoticeRepository;
 import lombok.RequiredArgsConstructor;
@@ -45,7 +47,7 @@ public class NoticeService {
      */
     public Notice findById(Long id) {
         return noticeRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("공지사항을 찾을 수 없습니다: " + id));
+                .orElseThrow(() -> NoticeException.of(NoticeErrorCode.NOTICE_NOT_FOUND));
     }
 
     /**

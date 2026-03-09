@@ -1,5 +1,7 @@
 package com.ict.wiki.inquiry.service;
 
+import com.ict.wiki.exception.code.InquiryErrorCode;
+import com.ict.wiki.exception.custom.InquiryException;
 import com.ict.wiki.inquiry.domain.*;
 import com.ict.wiki.inquiry.dto.request.InquirySaveRequest;
 import com.ict.wiki.inquiry.dto.request.LocationRequest;
@@ -81,7 +83,7 @@ public class InquiryService {
      */
     public Inquiry findById(Long id) {
         return inquiryRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("민원을 찾을 수 없습니다: " + id));
+                .orElseThrow(() -> InquiryException.of(InquiryErrorCode.INQUIRY_NOT_FOUND));
     }
 
     /**
@@ -201,7 +203,7 @@ public class InquiryService {
     @Transactional
     public void complete(Long id) {
         Inquiry inquiry = inquiryRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("민원을 찾을 수 없습니다: " + id));
+                .orElseThrow(() -> InquiryException.of(InquiryErrorCode.INQUIRY_NOT_FOUND));
 
         inquiry.complete(); // 엔티티에 위임
     }

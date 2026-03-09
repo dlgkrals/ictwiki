@@ -2,6 +2,8 @@ package com.ict.wiki.login.service;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.ict.wiki.exception.code.AuthErrorCode;
+import com.ict.wiki.exception.custom.AuthException;
 import com.ict.wiki.login.domain.User;
 import com.ict.wiki.util.EmailService;
 import lombok.RequiredArgsConstructor;
@@ -81,7 +83,7 @@ public class EmailVerificationService {
         String email = verificationTokenCache.getIfPresent(token);
 
         if (email == null) {
-            throw new IllegalArgumentException("유효하지 않거나 만료된 인증 토큰입니다. 인증 메일을 재발송해주세요.");
+            throw AuthException.of(AuthErrorCode.EMAIL_TOKEN_INVALID);
         }
 
         // 사용자 조회
@@ -119,7 +121,7 @@ public class EmailVerificationService {
 
         // 이미 인증된 경우
         if (user.isActive()) {
-            throw new IllegalArgumentException("이미 인증된 계정입니다");
+            throw AuthException.of(AuthErrorCode.EMAIL_ALREADY_VERIFIED);
         }
 
         // ⭐ 재전송 제한 체크
@@ -144,16 +146,14 @@ public class EmailVerificationService {
             long secondsSinceLastSend = Duration.between(lastSendTime, LocalDateTime.now()).getSeconds();
             if (secondsSinceLastSend < 60) {
                 long remainingSeconds = 60 - secondsSinceLastSend;
-                throw new IllegalArgumentException(
-                        String.format("이메일은 60초에 한 번만 재전송할 수 있습니다. %d초 후 다시 시도해주세요.", remainingSeconds)
-                );
+                throw AuthException.of(AuthErrorCode.EMAIL_SEND_TOO_FAST, remainingSeconds);
             }
         }
 
         // 2. 최대 3번 제한 체크
         Integer sendCount = resendCountCache.getIfPresent(email);
         if (sendCount != null && sendCount >= 3) {
-            throw new IllegalArgumentException("이메일 재전송은 최대 3회까지 가능합니다. 60초 후 다시 시도해주세요.");
+            throw AuthException.of(AuthErrorCode.EMAIL_SEND_LIMIT_EXCEEDED);
         }
     }
 

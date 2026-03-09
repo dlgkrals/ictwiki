@@ -2,6 +2,8 @@ package com.ict.wiki.login.service;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.ict.wiki.exception.code.AuthErrorCode;
+import com.ict.wiki.exception.custom.AuthException;
 import com.ict.wiki.login.domain.User;
 import com.ict.wiki.util.EmailService;
 import com.ict.wiki.util.PasswordUtil;
@@ -54,10 +56,10 @@ public class PasswordResetService {
 
         // 계정 활성화 확인
         if (!user.isActive()) {
-            throw new IllegalArgumentException("이메일 인증이 완료되지 않은 계정입니다");
+            throw AuthException.of(AuthErrorCode.EMAIL_NOT_VERIFIED);
         }
 
-        // ⭐ 5분 재전송 제한 체크
+        // 5분 재전송 제한 체크
         checkResendLimit(email);
 
         // UUID 토큰 생성
@@ -104,15 +106,15 @@ public class PasswordResetService {
         String email = resetTokenCache.getIfPresent(token);
 
         if (email == null) {
-            throw new IllegalArgumentException("유효하지 않거나 만료된 재설정 토큰입니다. 재설정 메일을 다시 요청해주세요.");
+            throw AuthException.of(AuthErrorCode.PASSWORD_RESET_TOKEN_INVALID);
         }
 
         // 사용자 조회
         User user = userService.findByEmail(email);  // ✅ 변경
 
-        // ⭐ 기존 비밀번호와 동일한지 검증
+        // 기존 비밀번호와 동일한지 검증
         if (PasswordUtil.matches(newPassword, user.getPassword())) {
-            throw new IllegalArgumentException("기존 비밀번호와 동일한 비밀번호는 사용할 수 없습니다");
+            throw AuthException.of(AuthErrorCode.PASSWORD_SAME_AS_OLD);
         }
 
         // 비밀번호 암호화 및 업데이트

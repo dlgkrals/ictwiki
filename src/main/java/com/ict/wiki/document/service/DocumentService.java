@@ -6,6 +6,8 @@ import com.ict.wiki.document.events.DocumentCreatedEvent;
 import com.ict.wiki.document.events.DocumentDeletedEvent;
 import com.ict.wiki.document.events.DocumentUpdatedEvent;
 import com.ict.wiki.document.repository.DocumentRepository;
+import com.ict.wiki.exception.code.DocumentErrorCode;
+import com.ict.wiki.exception.custom.DocumentException;
 import com.ict.wiki.login.domain.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +38,7 @@ public class DocumentService {
     public Document createDocument(String title, String content, String categoryCode, User author) {
         // 제목 중복 체크
         if (documentRepository.existsByTitle(title)) {
-            throw new IllegalArgumentException("이미 존재하는 제목입니다: " + title);
+            throw DocumentException.of(DocumentErrorCode.DOCUMENT_TITLE_DUPLICATE);
         }
 
         // 카테고리 코드로부터 Enum 찾기
@@ -64,7 +66,8 @@ public class DocumentService {
      */
     public Document getDocument(Long id) {
         return documentRepository.findByIdWithAuthor(id)
-                .orElseThrow(() -> new IllegalArgumentException("문서를 찾을 수 없습니다: " + id));
+                .orElseThrow(() -> DocumentException.of(DocumentErrorCode.DOCUMENT_NOT_FOUND));
+
     }
 
     /**
@@ -72,7 +75,7 @@ public class DocumentService {
      */
     public Document getDocumentByTitle(String title) {
         return documentRepository.findByTitleAndNotDeleted(title)
-                .orElseThrow(() -> new IllegalArgumentException("문서를 찾을 수 없습니다: " + title));
+                .orElseThrow(() -> DocumentException.of(DocumentErrorCode.DOCUMENT_NOT_FOUND));
     }
 
 //    /**
@@ -99,7 +102,7 @@ public class DocumentService {
     public Document getDocumentAndIncrementView(Long id) {
         // author + lastEditor 모두 fetch join
         Document document = documentRepository.findByIdWithAuthorAndLastEditor(id)
-                .orElseThrow(() -> new IllegalArgumentException("문서를 찾을 수 없습니다: " + id));
+                .orElseThrow(() -> DocumentException.of(DocumentErrorCode.DOCUMENT_NOT_FOUND));
 
         // 삭제되지 않은 문서만 조회수 증가
         if (!document.getDeleted()) {
@@ -119,12 +122,12 @@ public class DocumentService {
 
         // 삭제된 문서는 수정 불가
         if (document.getDeleted()) {
-            throw new IllegalArgumentException("삭제된 문서는 수정할 수 없습니다");
+            throw DocumentException.of(DocumentErrorCode.DOCUMENT_CANNOT_UPDATE_DELETED);
         }
 
         // 제목 중복 체크 (자기 자신 제외)
         if (!document.getTitle().equals(title) && documentRepository.existsByTitle(title)) {
-            throw new IllegalArgumentException("이미 존재하는 제목입니다: " + title);
+            throw DocumentException.of(DocumentErrorCode.DOCUMENT_TITLE_DUPLICATE);
         }
 
         DocumentCategory category = DocumentCategory.fromCode(categoryCode);
@@ -156,7 +159,7 @@ public class DocumentService {
         Document document = getDocument(id);
 
         if (document.getDeleted()) {
-            throw new IllegalArgumentException("이미 삭제된 문서입니다");
+            throw DocumentException.of(DocumentErrorCode.DOCUMENT_ALREADY_DELETED);
         }
 
         String title = document.getTitle();
@@ -180,7 +183,7 @@ public class DocumentService {
         Document document = getDocument(id);
 
         if (!document.getDeleted()) {
-            throw new IllegalArgumentException("삭제되지 않은 문서입니다");
+            throw DocumentException.of(DocumentErrorCode.DOCUMENT_NOT_DELETED);
         }
 
         document.restore();

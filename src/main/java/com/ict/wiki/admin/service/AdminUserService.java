@@ -1,6 +1,8 @@
 package com.ict.wiki.admin.service;
 
 import com.ict.wiki.admin.dto.response.UserManagementResponse;
+import com.ict.wiki.exception.code.AuthErrorCode;
+import com.ict.wiki.exception.custom.AuthException;
 import com.ict.wiki.login.domain.Role;
 import com.ict.wiki.login.domain.User;
 import com.ict.wiki.login.repository.UserRepository;
@@ -54,9 +56,9 @@ public class AdminUserService {
      * 특정 회원 조회
      */
     public User getUserById(Long userId) {
-        return userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+        return userService.findById(userId); // 이미 AuthException 던짐
     }
+
 
     // ========== 회원 승인 ==========
 
@@ -70,7 +72,7 @@ public class AdminUserService {
         User user = getUserById(userId);
 
         if (user.isApproved()) {
-            throw new IllegalArgumentException("이미 승인된 회원입니다");
+            throw AuthException.of(AuthErrorCode.ALREADY_APPROVED);
         }
 
         user.approve();
@@ -104,7 +106,7 @@ public class AdminUserService {
         User user = getUserById(userId);
 
         if (!user.isApproved()) {
-            throw new IllegalArgumentException("승인되지 않은 회원은 활성화할 수 없습니다");
+            throw AuthException.of(AuthErrorCode.CANNOT_ACTIVATE_NOT_APPROVED);
         }
 
         user.activate();

@@ -2,6 +2,8 @@ package com.ict.wiki.login.service;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.ict.wiki.exception.code.AuthErrorCode;
+import com.ict.wiki.exception.custom.AuthException;
 import com.ict.wiki.login.domain.Role;
 import com.ict.wiki.login.domain.User;
 import com.ict.wiki.login.dto.request.UserUpdateRequest;
@@ -47,7 +49,7 @@ public class UserService {
      */
     public User findByEmail(String email) {
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+                .orElseThrow(() -> AuthException.of(AuthErrorCode.USER_NOT_FOUND));
     }
 
     /**
@@ -58,7 +60,7 @@ public class UserService {
      */
     public User findById(Long userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다"));
+                .orElseThrow(() -> AuthException.of(AuthErrorCode.USER_NOT_FOUND));
     }
 
     /**
