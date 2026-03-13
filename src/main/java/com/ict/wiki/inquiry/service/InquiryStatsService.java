@@ -18,9 +18,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * 민원 통계 서비스
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -31,30 +28,18 @@ public class InquiryStatsService {
 
     // ========== 시간별 통계 ==========
 
-    /**
-     * 일별 민원 건수
-     */
     public long getDailyCount(LocalDate date) {
         return inquiryRepository.countByDate(date);
     }
 
-    /**
-     * 월별 민원 건수
-     */
     public long getMonthlyCount(int year, int month) {
         return inquiryRepository.countByYearAndMonth(year, month);
     }
 
-    /**
-     * 연별 민원 건수
-     */
     public long getYearlyCount(int year) {
         return inquiryRepository.countByYear(year);
     }
 
-    /**
-     * 기간별 일일 통계
-     */
     public List<InquiryStatsResponse> getDailyStats(LocalDate startDate, LocalDate endDate) {
         LocalDateTime start = startDate.atStartOfDay();
         LocalDateTime end = endDate.atTime(23, 59, 59);
@@ -74,9 +59,6 @@ public class InquiryStatsService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * 특정 연도의 월별 통계
-     */
     public List<InquiryStatsResponse> getMonthlyStatsInYear(int year) {
         List<Object[]> results = inquiryRepository.countByMonthsInYear(year);
 
@@ -100,9 +82,6 @@ public class InquiryStatsService {
 
     // ========== 유형별 통계 ==========
 
-    /**
-     * 유형별 통계
-     */
     public List<InquiryStatsResponse> getTypeStats() {
         List<Object[]> results = inquiryRepository.countByType();
 
@@ -126,9 +105,6 @@ public class InquiryStatsService {
 
     // ========== 처리방식별 통계 ==========
 
-    /**
-     * 처리방식별 통계 (원격/방문)
-     */
     public List<InquiryStatsResponse> getMethodStats() {
         List<Object[]> results = inquiryRepository.countByMethod();
 
@@ -152,9 +128,6 @@ public class InquiryStatsService {
 
     // ========== 건물별 통계 ==========
 
-    /**
-     * 건물별 통계
-     */
     public List<InquiryStatsResponse> getBuildingStats() {
         List<Object[]> results = inquiryRepository.countByBuilding();
 
@@ -178,9 +151,6 @@ public class InquiryStatsService {
 
     // ========== 상태별 통계 ==========
 
-    /**
-     * 상태별 통계
-     */
     public List<InquiryStatsResponse> getStatusStats() {
         List<Object[]> results = inquiryRepository.countByStatus();
 
@@ -204,33 +174,20 @@ public class InquiryStatsService {
 
     // ========== 종합 대시보드 통계 ==========
 
-    /**
-     * 대시보드용 종합 통계
-     */
     public InquiryDashboardStatsResponse getDashboardStats() {
-        // 전체 건수
         long totalCount = inquiryRepository.countAll();
 
-        // 상태별 건수 (Map 형태)
         Map<String, Long> statusCounts = inquiryRepository.countByStatus().stream()
                 .collect(Collectors.toMap(
                         result -> ((InquiryStatus) result[0]).getDescription(),
                         result -> ((Number) result[1]).longValue()
                 ));
 
-        // 유형별 통계
         List<InquiryStatsResponse> typeCounts = getTypeStats();
-
-        // 처리방식별 통계
         List<InquiryStatsResponse> methodCounts = getMethodStats();
-
-        // 건물별 통계
         List<InquiryStatsResponse> buildingCounts = getBuildingStats();
 
-        // 평균 통계 계산
-        Double avgDailyCount = calculateAvgDailyCount(totalCount);
-        Double avgMonthlyCount = calculateAvgMonthlyCount(totalCount);
-        Double avgProcessingDays = inquiryRepository.getAvgProcessingHours();
+        Double avgProcessingHours = inquiryRepository.getAvgProcessingHours();
 
         return InquiryDashboardStatsResponse.builder()
                 .totalCount(totalCount)
@@ -238,57 +195,36 @@ public class InquiryStatsService {
                 .typeCounts(typeCounts)
                 .methodCounts(methodCounts)
                 .buildingCounts(buildingCounts)
-                .avgDailyCount(avgDailyCount)
-                .avgMonthlyCount(avgMonthlyCount)
-                .avgProcessingDays(avgProcessingDays != null ? Math.round(avgProcessingDays * 10) / 10.0 : null)
+                .avgDailyCount(calculateAvgDailyCount(totalCount))
+                .avgMonthlyCount(calculateAvgMonthlyCount(totalCount))
+                .avgProcessingDays(avgProcessingHours != null ? Math.round(avgProcessingHours) : null)
                 .build();
     }
 
     // ========== 평균 계산 헬퍼 ==========
 
-    /**
-     * 일평균 민원 수 계산
-     */
-    private Double calculateAvgDailyCount(long totalCount) {
+    private Long calculateAvgDailyCount(long totalCount) {
         LocalDateTime oldestDate = inquiryRepository.findOldestCreatedAt();
-        if (oldestDate == null) {
-            return 0.0;
-        }
+        if (oldestDate == null) return 0L;
 
         long daysBetween = ChronoUnit.DAYS.between(oldestDate, LocalDateTime.now()) + 1;
-        if (daysBetween == 0) {
-            return (double) totalCount;
-        }
+        if (daysBetween == 0) return totalCount;
 
-        double avg = (double) totalCount / daysBetween;
-        return Math.round(avg * 100) / 100.0; // 소수점 2자리
+        return Math.round((double) totalCount / daysBetween);
     }
 
-    /**
-     * 월평균 민원 수 계산
-     */
-    private Double calculateAvgMonthlyCount(long totalCount) {
+    private Long calculateAvgMonthlyCount(long totalCount) {
         LocalDateTime oldestDate = inquiryRepository.findOldestCreatedAt();
-        if (oldestDate == null) {
-            return 0.0;
-        }
+        if (oldestDate == null) return 0L;
 
         long monthsBetween = ChronoUnit.MONTHS.between(oldestDate, LocalDateTime.now()) + 1;
-        if (monthsBetween == 0) {
-            return (double) totalCount;
-        }
+        if (monthsBetween == 0) return totalCount;
 
-        double avg = (double) totalCount / monthsBetween;
-        return Math.round(avg * 100) / 100.0; // 소수점 2자리
+        return Math.round((double) totalCount / monthsBetween);
     }
 
-    /**
-     * 퍼센트 계산 (소수점 2자리)
-     */
     private Double calculatePercentage(long count, long total) {
-        if (total == 0) {
-            return 0.0;
-        }
+        if (total == 0) return 0.0;
         double percentage = ((double) count / total) * 100;
         return Math.round(percentage * 100) / 100.0;
     }

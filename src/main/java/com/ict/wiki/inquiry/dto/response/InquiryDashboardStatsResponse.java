@@ -47,15 +47,15 @@ public class InquiryDashboardStatsResponse {
     /**
      * 일평균 민원 수
      */
-    private Double avgDailyCount;
+    private Long avgDailyCount;
 
     /**
      * 월평균 민원 수
      */
-    private Double avgMonthlyCount;
+    private Long avgMonthlyCount;
 
     /**
      * 평균 처리 시간 (일)
      */
-    private Double avgProcessingDays;
+    private Long avgProcessingDays;
 }
