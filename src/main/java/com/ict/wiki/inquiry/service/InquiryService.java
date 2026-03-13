@@ -5,12 +5,15 @@ import com.ict.wiki.exception.custom.InquiryException;
 import com.ict.wiki.inquiry.domain.*;
 import com.ict.wiki.inquiry.dto.request.InquirySaveRequest;
 import com.ict.wiki.inquiry.dto.request.LocationRequest;
+import com.ict.wiki.inquiry.events.InquiryCompletedEvent;
 import com.ict.wiki.inquiry.repository.InquiryRepository;
 import com.ict.wiki.login.domain.User;
 import com.ict.wiki.login.service.UserService;
+import com.ict.wiki.rag.service.RagService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +34,7 @@ public class InquiryService {
 
     private final InquiryRepository inquiryRepository;
     private final UserService userService;
+    private final ApplicationEventPublisher eventPublisher;
 
     // ========== 생성 ==========
 
@@ -206,6 +210,8 @@ public class InquiryService {
                 .orElseThrow(() -> InquiryException.of(InquiryErrorCode.INQUIRY_NOT_FOUND));
 
         inquiry.complete(); // 엔티티에 위임
+
+        eventPublisher.publishEvent(new InquiryCompletedEvent(inquiry));
     }
 
 

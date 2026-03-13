@@ -1,6 +1,8 @@
-package com.ict.wiki.document.service;
+package com.ict.wiki.document.handler;
 
 import com.ict.wiki.document.events.*;
+import com.ict.wiki.document.service.DocumentHistoryService;
+import com.ict.wiki.document.service.DocumentLinkService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
