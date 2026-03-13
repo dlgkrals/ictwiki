@@ -44,6 +44,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
+          envs: OPENAI_API_KEY
           script: |
             cd /home/ubuntu/app/build/libs
             sudo fuser -k 8080/tcp || true
@@ -51,5 +52,8 @@ jobs:
             
             JAR_FILE=$(ls -t wiki*.jar 2>/dev/null | grep -v plain | head -n 1)
             
-            nohup java -jar "$JAR_FILE" > app.log 2>&1 &
+            nohup env OPENAI_API_KEY=$OPENAI_API_KEY java -jar "$JAR_FILE" > app.log 2>&1 &
+#            nohup java -jar "$JAR_FILE" > app.log 2>&1 &
 #            nohup java -jar *.jar > app.log 2>&1 &
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
