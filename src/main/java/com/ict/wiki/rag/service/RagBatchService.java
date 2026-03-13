@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * 기존 완료 민원 배치 임베딩 서비스
  * - 서비스 최초 도입 시 1회 실행
- * - 이미 임베딩된 민원은 스킵 (중복 방지)
+ * - 재실행 시 기존 청크 전체 삭제 후 새로 임베딩 (새로고침)
  */
 @Slf4j
 @Service
@@ -28,14 +28,22 @@ public class RagBatchService {
     /**
      * 완료된 민원 전체 배치 임베딩
      * POST /api/rag/batch/embed 에서 호출
+     * - 기존 청크 전체 삭제 후 재임베딩
      *
      * @return 처리 결과 요약
      */
     @Transactional
     public BatchResult embedAllCompletedInquiries() {
         List<Inquiry> completed = inquiryRepository.findByStatus(InquiryStatus.COMPLETED);
-
         int total = completed.size();
+
+        // 기존 청크 전체 삭제 (새로고침)
+        long existing = ragChunkRepository.count();
+        if (existing > 0) {
+            ragChunkRepository.deleteAll();
+            log.info("기존 청크 {}건 삭제 완료", existing);
+        }
+
         int success = 0;
         int skipped = 0;
         int failed = 0;
@@ -48,12 +56,6 @@ public class RagBatchService {
                 if (inquiry.getSolution() == null || inquiry.getSolution().isBlank()) {
                     skipped++;
                     log.debug("solution 없어 스킵 - 민원 ID: {}", inquiry.getId());
-                    continue;
-                }
-
-                boolean alreadyEmbedded = ragChunkRepository.findByInquiryId(inquiry.getId()).isPresent();
-                if (alreadyEmbedded) {
-                    skipped++;
                     continue;
                 }
 
