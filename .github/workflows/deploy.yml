@@ -55,6 +55,6 @@ jobs:
             
             JAR_FILE=$(ls -t wiki*.jar 2>/dev/null | grep -v plain | head -n 1)
             
-            nohup env OPENAI_API_KEY=$OPENAI_API_KEY java -jar "$JAR_FILE" > app.log 2>&1 &
+            nohup java -jar "$JAR_FILE" --spring.ai.openai.api-key=$OPENAI_API_KEY > app.log 2>&1 &
 #            nohup java -jar "$JAR_FILE" > app.log 2>&1 &
 #            nohup java -jar *.jar > app.log 2>&1 &
