@@ -22,7 +22,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class EmbeddingService {
 
-    @Value("${openai.api-key}")
+    @Value("${spring.ai.openai.api-key}")
     private String apiKey;
 
     private static final String EMBEDDING_URL = "https://api.openai.com/v1/embeddings";

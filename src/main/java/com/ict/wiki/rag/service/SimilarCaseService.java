@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class SimilarCaseService {
 
-    @Value("${openai.api-key}")
+    @Value("${spring.ai.openai.api-key}")
     private String apiKey;
 
     @Value("${spring.ai.openai.prompt.summary}")
