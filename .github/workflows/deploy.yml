@@ -27,9 +27,6 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build -x test
 
-      - name: Set OPENAI_API_KEY in runner env
-        run: echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
-
       # EC2로 JAR 파일 전송
       - name: Transfer JAR to EC2
         uses: appleboy/scp-action@master
@@ -55,6 +52,5 @@ jobs:
             
             JAR_FILE=$(ls -t wiki*.jar 2>/dev/null | grep -v plain | head -n 1)
             
-            nohup java -jar "$JAR_FILE" --spring.ai.openai.api-key=$OPENAI_API_KEY > app.log 2>&1 &
-#            nohup java -jar "$JAR_FILE" > app.log 2>&1 &
+            nohup java -jar "$JAR_FILE" > app.log 2>&1 &
 #            nohup java -jar *.jar > app.log 2>&1 &
