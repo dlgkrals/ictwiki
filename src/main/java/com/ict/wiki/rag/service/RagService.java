@@ -4,6 +4,7 @@ import com.ict.wiki.inquiry.domain.Inquiry;
 import com.ict.wiki.inquiry.domain.InquiryLocation;
 import com.ict.wiki.rag.domain.RagChunk;
 import com.ict.wiki.rag.repository.RagChunkRepository;
+import com.ict.wiki.rag.util.InquiryContentBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -56,7 +57,7 @@ public class RagService {
             return;
         }
 
-        String content = buildInquiryContent(inquiry);
+        String content = InquiryContentBuilder.build(inquiry);
         float[] vector = embeddingService.embed(content); // 실패 시 RagException 발생
 
         RagChunk chunk = RagChunk.builder()
@@ -88,22 +89,6 @@ public class RagService {
                 .sorted(Comparator.comparingDouble(ScoredChunk::score).reversed())
                 .limit(TOP_K)
                 .collect(Collectors.toList());
-    }
-
-    // ===== 임베딩 원문 구성 =====
-
-    private String buildInquiryContent(Inquiry inquiry) {
-        String location = inquiry.getLocations().isEmpty()
-                ? "위치 미상"
-                : inquiry.getLocations().stream()
-                .map(InquiryLocation::getFormatted)
-                .collect(Collectors.joining(", "));
-
-        return String.format("유형: %s | 위치: %s | 문제: %s | 해결: %s",
-                inquiry.getType().getDescription(),
-                location,
-                inquiry.getDescription(),
-                inquiry.getSolution());
     }
 
     // ===== 코사인 유사도 계산 =====
