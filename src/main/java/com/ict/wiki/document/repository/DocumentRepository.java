@@ -110,4 +110,10 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
     WHERE d.id = :id
 """)
     Optional<Document> findByIdWithAuthorAndLastEditor(@Param("id") Long id);
+
+    /**
+     * 제목 존재 여부 확인 (삭제되지 않은 문서만)
+     */
+    @Query("SELECT COUNT(d) > 0 FROM Document d WHERE d.title = :title AND d.deleted = false")
+    boolean existsByTitleAndNotDeleted(@Param("title") String title);
 }

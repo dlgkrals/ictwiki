@@ -252,12 +252,14 @@ public class DocumentController {
     @PostMapping("/{id}/restore")
     public ResponseEntity<Map<String, String>> restoreDocument(
             @PathVariable Long id,
+            @RequestParam(defaultValue = "false") boolean force,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        documentService.restoreDocument(id, userDetails.getUser());  // User 엔티티 전달
+        documentService.restoreDocument(id, userDetails.getUser(), force);
 
         return ResponseEntity.ok(Map.of("message", "문서가 복원되었습니다"));
     }
+
 
     /**
      * 삭제된 문서 목록 (관리자용)

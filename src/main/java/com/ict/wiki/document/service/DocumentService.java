@@ -37,7 +37,7 @@ public class DocumentService {
     @Transactional
     public Document createDocument(String title, String content, String categoryCode, User author) {
         // 제목 중복 체크
-        if (documentRepository.existsByTitle(title)) {
+        if (documentRepository.existsByTitleAndNotDeleted(title)) {
             throw DocumentException.of(DocumentErrorCode.DOCUMENT_TITLE_DUPLICATE);
         }
 
@@ -126,7 +126,7 @@ public class DocumentService {
         }
 
         // 제목 중복 체크 (자기 자신 제외)
-        if (!document.getTitle().equals(title) && documentRepository.existsByTitle(title)) {
+        if (!document.getTitle().equals(title) && documentRepository.existsByTitleAndNotDeleted(title)) {
             throw DocumentException.of(DocumentErrorCode.DOCUMENT_TITLE_DUPLICATE);
         }
 
@@ -179,11 +179,24 @@ public class DocumentService {
      * 문서 복원
      */
     @Transactional
-    public void restoreDocument(Long id, User user) {
+    public void restoreDocument(Long id, User user, boolean force) {
         Document document = getDocument(id);
 
         if (!document.getDeleted()) {
             throw DocumentException.of(DocumentErrorCode.DOCUMENT_NOT_DELETED);
+        }
+
+        // 같은 이름의 활성 문서 충돌 체크
+        if (documentRepository.existsByTitleAndNotDeleted(document.getTitle())) {
+            if (!force) {
+                throw DocumentException.of(DocumentErrorCode.DOCUMENT_TITLE_DUPLICATE);
+            }
+            // force=true면 기존 활성 문서 소프트 삭제
+            Document conflict = documentRepository.findByTitleAndNotDeleted(document.getTitle())
+                    .orElseThrow();
+            conflict.delete();
+            documentRepository.save(conflict);
+            log.info("충돌 문서 소프트 삭제 - Title: {}", conflict.getTitle());
         }
 
         document.restore();
