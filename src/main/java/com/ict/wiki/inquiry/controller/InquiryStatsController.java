@@ -104,9 +104,11 @@ public class InquiryStatsController {
      * GET /api/inquiries/stats/by-type
      */
     @GetMapping("/by-type")
-    public ResponseEntity<List<InquiryStatsResponse>> getTypeStats() {
-        List<InquiryStatsResponse> stats = statsService.getTypeStats();
-        return ResponseEntity.ok(stats);
+    public ResponseEntity<List<InquiryStatsResponse>> getTypeStats(
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) Integer week) {
+        return ResponseEntity.ok(statsService.getTypeStats(year, month, week));
     }
 
     /**
@@ -114,9 +116,11 @@ public class InquiryStatsController {
      * GET /api/inquiries/stats/by-method
      */
     @GetMapping("/by-method")
-    public ResponseEntity<List<InquiryStatsResponse>> getMethodStats() {
-        List<InquiryStatsResponse> stats = statsService.getMethodStats();
-        return ResponseEntity.ok(stats);
+    public ResponseEntity<List<InquiryStatsResponse>> getMethodStats(
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) Integer week) {
+        return ResponseEntity.ok(statsService.getMethodStats(year, month, week));
     }
 
     /**
@@ -124,9 +128,11 @@ public class InquiryStatsController {
      * GET /api/inquiries/stats/by-building
      */
     @GetMapping("/by-building")
-    public ResponseEntity<List<InquiryStatsResponse>> getBuildingStats() {
-        List<InquiryStatsResponse> stats = statsService.getBuildingStats();
-        return ResponseEntity.ok(stats);
+    public ResponseEntity<List<InquiryStatsResponse>> getBuildingStats(
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) Integer week) {
+        return ResponseEntity.ok(statsService.getBuildingStats(year, month, week));
     }
 
     /**
@@ -134,9 +140,19 @@ public class InquiryStatsController {
      * GET /api/inquiries/stats/by-status
      */
     @GetMapping("/by-status")
-    public ResponseEntity<List<InquiryStatsResponse>> getStatusStats() {
-        List<InquiryStatsResponse> stats = statsService.getStatusStats();
-        return ResponseEntity.ok(stats);
+    public ResponseEntity<List<InquiryStatsResponse>> getStatusStats(
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) Integer week) {
+        return ResponseEntity.ok(statsService.getStatusStats(year, month, week));
+    }
+
+    // 월별 탭 주차별 통계 추가
+    @GetMapping("/weekly-in-month")
+    public ResponseEntity<List<InquiryStatsResponse>> getWeeklyStatsInMonth(
+            @RequestParam int year,
+            @RequestParam int month) {
+        return ResponseEntity.ok(statsService.getWeeklyStatsInMonth(year, month));
     }
 
     // ========== 종합 대시보드 ==========
@@ -146,8 +162,8 @@ public class InquiryStatsController {
      * GET /api/inquiries/stats/dashboard
      */
     @GetMapping("/dashboard")
-    public ResponseEntity<InquiryDashboardStatsResponse> getDashboardStats() {
-        InquiryDashboardStatsResponse stats = statsService.getDashboardStats();
-        return ResponseEntity.ok(stats);
+    public ResponseEntity<InquiryDashboardStatsResponse> getDashboardStats(
+            @RequestParam(required = false) Integer year) {
+        return ResponseEntity.ok(statsService.getDashboardStats(year));
     }
 }

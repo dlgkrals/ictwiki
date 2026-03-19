@@ -218,4 +218,61 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
      */
     @Query("SELECT MIN(i.createdAt) FROM Inquiry i")
     LocalDateTime findOldestCreatedAt();
+
+    // ========== 연도 필터 통계 ==========
+
+    @Query("SELECT COUNT(i) FROM Inquiry i WHERE FUNCTION('YEAR', i.createdAt) = :year")
+    long countAllByYear(@Param("year") int year);
+
+    @Query("SELECT i.status, COUNT(i) FROM Inquiry i WHERE FUNCTION('YEAR', i.createdAt) = :year GROUP BY i.status")
+    List<Object[]> countByStatusAndYear(@Param("year") int year);
+
+    @Query("SELECT i.type, COUNT(i) FROM Inquiry i WHERE FUNCTION('YEAR', i.createdAt) = :year GROUP BY i.type")
+    List<Object[]> countByTypeAndYear(@Param("year") int year);
+
+    @Query("SELECT i.method, COUNT(i) FROM Inquiry i WHERE i.method IS NOT NULL AND FUNCTION('YEAR', i.createdAt) = :year GROUP BY i.method")
+    List<Object[]> countByMethodAndYear(@Param("year") int year);
+
+    @Query("SELECT l.building, COUNT(l) FROM InquiryLocation l WHERE FUNCTION('YEAR', l.inquiry.createdAt) = :year GROUP BY l.building ORDER BY COUNT(l) DESC")
+    List<Object[]> countByBuildingAndYear(@Param("year") int year);
+
+// ========== 월 필터 통계 ==========
+
+    @Query("SELECT i.status, COUNT(i) FROM Inquiry i WHERE FUNCTION('YEAR', i.createdAt) = :year AND FUNCTION('MONTH', i.createdAt) = :month GROUP BY i.status")
+    List<Object[]> countByStatusAndYearMonth(@Param("year") int year, @Param("month") int month);
+
+    @Query("SELECT i.type, COUNT(i) FROM Inquiry i WHERE FUNCTION('YEAR', i.createdAt) = :year AND FUNCTION('MONTH', i.createdAt) = :month GROUP BY i.type")
+    List<Object[]> countByTypeAndYearMonth(@Param("year") int year, @Param("month") int month);
+
+    @Query("SELECT i.method, COUNT(i) FROM Inquiry i WHERE i.method IS NOT NULL AND FUNCTION('YEAR', i.createdAt) = :year AND FUNCTION('MONTH', i.createdAt) = :month GROUP BY i.method")
+    List<Object[]> countByMethodAndYearMonth(@Param("year") int year, @Param("month") int month);
+
+    @Query("SELECT l.building, COUNT(l) FROM InquiryLocation l WHERE FUNCTION('YEAR', l.inquiry.createdAt) = :year AND FUNCTION('MONTH', l.inquiry.createdAt) = :month GROUP BY l.building ORDER BY COUNT(l) DESC")
+    List<Object[]> countByBuildingAndYearMonth(@Param("year") int year, @Param("month") int month);
+
+// ========== 주차 필터 통계 ==========
+
+    @Query("SELECT i.status, COUNT(i) FROM Inquiry i WHERE i.createdAt BETWEEN :start AND :end GROUP BY i.status")
+    List<Object[]> countByStatusBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    @Query("SELECT i.type, COUNT(i) FROM Inquiry i WHERE i.createdAt BETWEEN :start AND :end GROUP BY i.type")
+    List<Object[]> countByTypeBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    @Query("SELECT i.method, COUNT(i) FROM Inquiry i WHERE i.method IS NOT NULL AND i.createdAt BETWEEN :start AND :end GROUP BY i.method")
+    List<Object[]> countByMethodBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    @Query("SELECT l.building, COUNT(l) FROM InquiryLocation l WHERE l.inquiry.createdAt BETWEEN :start AND :end GROUP BY l.building ORDER BY COUNT(l) DESC")
+    List<Object[]> countByBuildingBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+// ========== 월별 탭 주차별 통계 ==========
+
+    @Query(value = "SELECT WEEK(i.created_at, 3), COUNT(*) " +
+            "FROM inquiries i " +
+            "WHERE YEAR(i.created_at) = :year AND MONTH(i.created_at) = :month " +
+            "GROUP BY WEEK(i.created_at, 3) " +
+            "ORDER BY WEEK(i.created_at, 3)",
+            nativeQuery = true)
+    List<Object[]> countByWeekInMonth(@Param("year") int year, @Param("month") int month);
+
+
 }
