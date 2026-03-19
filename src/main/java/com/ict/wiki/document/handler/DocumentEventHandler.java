@@ -122,10 +122,17 @@ public class DocumentEventHandler {
                 event.getDocumentId());
 
         try {
-            // 관련 링크 정리
+            // 링크 정리 (소프트/영구 삭제 공통)
             log.debug("링크 정리 시작");
             linkService.deleteAllDocumentLinks(event.getDocumentId());
             log.debug("링크 정리 완료");
+
+            // 이력 삭제 (영구 삭제 시에만)
+            if (event.isPermanent()) {
+                log.debug("이력 삭제 시작");
+                historyService.deleteHistoriesByDocumentId(event.getDocumentId());
+                log.debug("이력 삭제 완료");
+            }
 
             log.info("=== 문서 삭제 이벤트 처리 완료 - documentId: {} ===",
                     event.getDocumentId());

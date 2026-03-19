@@ -172,7 +172,7 @@ public class DocumentService {
                 id, title, user.getEmail());
 
         // 🎯 이벤트 발행 (링크 정리는 이벤트 핸들러가 처리)
-        eventPublisher.publishEvent(new DocumentDeletedEvent(id, title, user));
+        eventPublisher.publishEvent(new DocumentDeletedEvent(id, title, user, false));
     }
 
     /**
@@ -202,7 +202,7 @@ public class DocumentService {
         String title = document.getTitle();
 
         // 이벤트 먼저 발행 (링크 정리)
-        eventPublisher.publishEvent(new DocumentDeletedEvent(id, title, admin));
+        eventPublisher.publishEvent(new DocumentDeletedEvent(id, title, admin, true));
 
         // 문서 삭제
         documentRepository.delete(document);

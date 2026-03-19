@@ -13,6 +13,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -227,6 +228,21 @@ public class DocumentController {
         documentService.deleteDocument(id, userDetails.getUser());  // User 엔티티 전달
 
         return ResponseEntity.ok(Map.of("message", "문서가 삭제되었습니다"));
+    }
+
+    /**
+     * 문서 완전 삭제 (관리자/조교 전용)
+     * DELETE /api/documents/{id}/permanent
+     */
+    @DeleteMapping("/{id}/permanent")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
+    public ResponseEntity<Map<String, String>> permanentDeleteDocument(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        documentService.permanentDeleteDocument(id, userDetails.getUser());
+
+        return ResponseEntity.ok(Map.of("message", "문서가 영구 삭제되었습니다"));
     }
 
     /**

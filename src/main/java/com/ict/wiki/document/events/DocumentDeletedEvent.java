@@ -13,10 +13,12 @@ public class DocumentDeletedEvent {
     private final Long documentId;
     private final String title;
     private final User deletedBy;
+    private final boolean permanent;
 
-    public DocumentDeletedEvent(Long documentId, String title, User deletedBy) {
+    public DocumentDeletedEvent(Long documentId, String title, User deletedBy, boolean permanent) {
         this.documentId = documentId;
         this.title = title;
         this.deletedBy = deletedBy;
+        this.permanent = permanent;
     }
 }

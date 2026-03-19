@@ -55,7 +55,7 @@ public class DocumentHistoryService {
         // 수정 전 상태를 이력에 저장
         DocumentHistory history = DocumentHistory.builder()
                 .document(document)
-                .version(event.getOldVersion())
+                .version(event.getDocument().getVersion())
                 .title(event.getOldTitle())
                 .content(event.getOldContent())
                 .editor(event.getEditor())
@@ -65,6 +65,14 @@ public class DocumentHistoryService {
         historyRepository.save(history);
         log.debug("수정 이력 생성 완료 - DocumentId: {}, Version: {}",
                 document.getId(), event.getOldVersion());
+    }
+
+    /**
+     * 특정 문서의 모든 이력 삭제 (문서 영구 삭제 시)
+     */
+    @Transactional
+    public void deleteHistoriesByDocumentId(Long documentId) {
+        historyRepository.deleteByDocumentId(documentId);
     }
 
     /**

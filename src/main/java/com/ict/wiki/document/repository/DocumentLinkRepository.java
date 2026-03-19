@@ -17,13 +17,13 @@ public interface DocumentLinkRepository extends JpaRepository<DocumentLink, Long
     /**
      * 특정 문서가 링크하는 모든 문서 조회 (나가는 링크)
      */
-    @Query("SELECT dl FROM DocumentLink dl WHERE dl.sourceDocument.id = :documentId")
+    @Query("SELECT dl FROM DocumentLink dl JOIN FETCH dl.sourceDocument JOIN FETCH dl.targetDocument WHERE dl.sourceDocument.id = :documentId")
     List<DocumentLink> findBySourceDocumentId(@Param("documentId") Long documentId);
 
     /**
      * 특정 문서를 링크하는 모든 문서 조회 (들어오는 링크, 역참조)
      */
-    @Query("SELECT dl FROM DocumentLink dl WHERE dl.targetDocument.id = :documentId")
+    @Query("SELECT dl FROM DocumentLink dl JOIN FETCH dl.sourceDocument JOIN FETCH dl.targetDocument WHERE dl.targetDocument.id = :documentId")
     List<DocumentLink> findByTargetDocumentId(@Param("documentId") Long documentId);
 
     /**
