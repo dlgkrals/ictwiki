@@ -1,5 +1,7 @@
 package com.ict.wiki.file.service;
 
+import com.ict.wiki.exception.code.FileErrorCode;
+import com.ict.wiki.exception.custom.FileException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -40,7 +42,7 @@ public class FileUploadService {
             file.transferTo(dir.resolve(storedName));
             log.info("이미지 저장 완료 - {}", storedName);
         } catch (IOException e) {
-            throw new RuntimeException("이미지 저장 실패", e);
+            throw FileException.of(FileErrorCode.FILE_SAVE_FAILED);
         }
 
         return "/api/files/" + storedName;
@@ -52,13 +54,13 @@ public class FileUploadService {
     public byte[] loadImage(String filename) {
         // 경로 탐색 공격 방지
         if (filename.contains("..") || filename.contains("/")) {
-            throw new IllegalArgumentException("잘못된 파일명");
+            throw FileException.of(FileErrorCode.INVALID_FILENAME);
         }
         try {
             Path path = Paths.get(uploadPath).resolve(filename);
             return Files.readAllBytes(path);
         } catch (IOException e) {
-            throw new RuntimeException("파일 없음: " + filename, e);
+            throw FileException.of(FileErrorCode.FILE_NOT_FOUND);
         }
     }
 
@@ -74,13 +76,13 @@ public class FileUploadService {
 
     private void validateImage(MultipartFile file) {
         if (file.isEmpty()) {
-            throw new IllegalArgumentException("파일이 비어있습니다");
+            throw FileException.of(FileErrorCode.EMPTY_FILE);
         }
         if (!ALLOWED_TYPES.contains(file.getContentType())) {
-            throw new IllegalArgumentException("허용되지 않는 파일 형식입니다 (jpg/png/gif/webp만 가능)");
+            throw FileException.of(FileErrorCode.INVALID_FILE_TYPE);
         }
         if (file.getSize() > 10 * 1024 * 1024) {
-            throw new IllegalArgumentException("파일 크기는 10MB를 초과할 수 없습니다");
+            throw FileException.of(FileErrorCode.FILE_SIZE_EXCEEDED);
         }
     }
 
