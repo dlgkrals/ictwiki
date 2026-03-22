@@ -125,7 +125,8 @@ public class SecurityConfig {
                                 "/api/auth/forgot-password",
                                 "/api/auth/reset-password",
                                 "/api/auth/csrf-token",
-                                "/api/test/public"
+                                "/api/test/public",
+                                "/api/files/**"
                         ).permitAll()
 
                         // 나머지 요청은 인증 필요
@@ -140,7 +141,7 @@ public class SecurityConfig {
                                 "camera=(), microphone=(), geolocation=(), interest-cohort=()"))
                         .addHeaderWriter(new StaticHeadersWriter("Content-Security-Policy",
                                 "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; " +
-                                        "img-src 'self' data:; font-src 'self'; connect-src " + connectSrc + ";"))
+                                        "img-src 'self' data: https://api.ictwiki.site; font-src 'self'; connect-src " + connectSrc + ";"))
                 )
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(restAuthenticationEntryPoint)
