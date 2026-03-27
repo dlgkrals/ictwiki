@@ -163,7 +163,9 @@ public class InquiryStatsController {
      */
     @GetMapping("/dashboard")
     public ResponseEntity<InquiryDashboardStatsResponse> getDashboardStats(
-            @RequestParam(required = false) Integer year) {
-        return ResponseEntity.ok(statsService.getDashboardStats(year));
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) Integer week) {
+        return ResponseEntity.ok(statsService.getDashboardStats(year, month, week));
     }
 }
