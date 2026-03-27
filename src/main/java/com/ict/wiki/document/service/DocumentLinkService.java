@@ -39,7 +39,9 @@ public class DocumentLinkService {
      */
     @Transactional
     public void processDocumentLinks(DocumentCreatedEvent event) {
-        parseAndSaveLinks(event.getDocument(), event.getContent());
+        Document sourceDocument = documentRepository.findById(event.getDocumentId())
+                .orElseThrow(() -> new IllegalStateException("문서를 찾을 수 없습니다: " + event.getDocumentId()));
+        parseAndSaveLinks(sourceDocument, event.getContent());
     }
 
     /**
@@ -47,12 +49,12 @@ public class DocumentLinkService {
      */
     @Transactional
     public void updateDocumentLinks(DocumentUpdatedEvent event) {
-        // 1. 기존 링크 삭제
         linkRepository.deleteBySourceDocumentId(event.getDocumentId());
         log.debug("기존 링크 삭제 완료 - DocumentId: {}", event.getDocumentId());
 
-        // 2. 새 링크 파싱 및 저장
-        parseAndSaveLinks(event.getDocument(), event.getNewContent());
+        Document sourceDocument = documentRepository.findById(event.getDocumentId())
+                .orElseThrow(() -> new IllegalStateException("문서를 찾을 수 없습니다: " + event.getDocumentId()));
+        parseAndSaveLinks(sourceDocument, event.getNewContent());
     }
 
     /**

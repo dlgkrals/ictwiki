@@ -14,14 +14,15 @@ public class DocumentCreatedEvent {
     private final Long documentId;
     private final String title;
     private final String content;
-    private final User author;
-    private final Document document;
+    private final Long authorId;
+    private final String authorName;
 
-    public DocumentCreatedEvent(Document document) {
-        this.document = document;
-        this.documentId = document.getId();
-        this.title = document.getTitle();
-        this.content = document.getContent();
-        this.author = document.getAuthor();
+    public DocumentCreatedEvent(Long documentId, String title, String content,
+                                Long authorId, String authorName) {
+        this.documentId = documentId;
+        this.title = title;
+        this.content = content;
+        this.authorId = authorId;
+        this.authorName = authorName;
     }
 }

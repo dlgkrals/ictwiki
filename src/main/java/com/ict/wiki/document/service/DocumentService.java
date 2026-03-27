@@ -56,7 +56,13 @@ public class DocumentService {
         log.info("문서 생성 완료 - Title: {}, Author: {}", title, author.getEmail());
 
         // 🎯 이벤트 발행 (링크/이력은 이벤트 핸들러가 처리)
-        eventPublisher.publishEvent(new DocumentCreatedEvent(savedDocument));
+        eventPublisher.publishEvent(new DocumentCreatedEvent(
+                savedDocument.getId(),
+                savedDocument.getTitle(),
+                savedDocument.getContent(),
+                author.getId(),
+                author.getName()
+        ));
 
         return savedDocument;
     }
@@ -146,7 +152,13 @@ public class DocumentService {
 
         // 🎯 이벤트 발행 (링크/이력은 이벤트 핸들러가 처리)
         eventPublisher.publishEvent(new DocumentUpdatedEvent(
-                updatedDocument, oldTitle, oldContent, oldVersion, editor, editReason));
+                updatedDocument.getId(),
+                oldTitle, oldContent,
+                updatedDocument.getTitle(), updatedDocument.getContent(),
+                oldVersion,
+                editor.getId(), editor.getName(),
+                editReason
+        ));
 
         return updatedDocument;
     }
@@ -172,7 +184,7 @@ public class DocumentService {
                 id, title, user.getEmail());
 
         // 🎯 이벤트 발행 (링크 정리는 이벤트 핸들러가 처리)
-        eventPublisher.publishEvent(new DocumentDeletedEvent(id, title, user, false));
+        eventPublisher.publishEvent(new DocumentDeletedEvent(id, title, false));
     }
 
     /**
@@ -215,7 +227,7 @@ public class DocumentService {
         String title = document.getTitle();
 
         // 이벤트 먼저 발행 (링크 정리)
-        eventPublisher.publishEvent(new DocumentDeletedEvent(id, title, admin, true));
+        eventPublisher.publishEvent(new DocumentDeletedEvent(id, title, true));
 
         // 문서 삭제
         documentRepository.delete(document);

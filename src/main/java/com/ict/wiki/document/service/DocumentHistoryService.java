@@ -5,6 +5,9 @@ import com.ict.wiki.document.domain.DocumentHistory;
 import com.ict.wiki.document.events.DocumentCreatedEvent;
 import com.ict.wiki.document.events.DocumentUpdatedEvent;
 import com.ict.wiki.document.repository.DocumentHistoryRepository;
+import com.ict.wiki.document.repository.DocumentRepository;
+import com.ict.wiki.login.domain.User;
+import com.ict.wiki.login.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,20 +27,25 @@ import java.util.List;
 public class DocumentHistoryService {
 
     private final DocumentHistoryRepository historyRepository;
+    private final DocumentRepository documentRepository;
+    private final UserRepository userRepository;  // 추가
 
     /**
      * 초기 이력 생성 (문서 생성 이벤트 처리용)
      */
     @Transactional
     public void createInitialHistory(DocumentCreatedEvent event) {
-        Document document = event.getDocument();
+        Document document = documentRepository.findById(event.getDocumentId())
+                .orElseThrow(() -> new IllegalStateException("문서를 찾을 수 없습니다: " + event.getDocumentId()));
+        User author = userRepository.findById(event.getAuthorId())
+                .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다: " + event.getAuthorId()));
 
         DocumentHistory history = DocumentHistory.builder()
                 .document(document)
                 .version(1)
                 .title(event.getTitle())
                 .content(event.getContent())
-                .editor(event.getAuthor())
+                .editor(author)
                 .editReason("문서 생성")
                 .build();
 
@@ -50,22 +58,24 @@ public class DocumentHistoryService {
      */
     @Transactional
     public void createUpdateHistory(DocumentUpdatedEvent event) {
-        Document document = event.getDocument();
+        Document document = documentRepository.findById(event.getDocumentId())
+                .orElseThrow(() -> new IllegalStateException("문서를 찾을 수 없습니다: " + event.getDocumentId()));
+        User editor = userRepository.findById(event.getEditorId())
+                .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다: " + event.getEditorId()));
 
-        // 수정 전 상태를 이력에 저장
         DocumentHistory history = DocumentHistory.builder()
                 .document(document)
-                .version(event.getDocument().getVersion())
+                .version(event.getOldVersion())
                 .title(event.getOldTitle())
                 .content(event.getOldContent())
-                .editor(event.getEditor())
+                .editor(editor)
                 .editReason(event.getEditReason())
                 .build();
 
         historyRepository.save(history);
-        log.debug("수정 이력 생성 완료 - DocumentId: {}, Version: {}",
-                document.getId(), event.getOldVersion());
+        log.debug("수정 이력 생성 완료 - DocumentId: {}, Version: {}", document.getId(), event.getOldVersion());
     }
+
 
     /**
      * 특정 문서의 모든 이력 삭제 (문서 영구 삭제 시)

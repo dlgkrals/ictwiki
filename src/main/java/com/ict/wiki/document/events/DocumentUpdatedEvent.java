@@ -16,25 +16,25 @@ public class DocumentUpdatedEvent {
     private final String oldContent;
     private final String newTitle;
     private final String newContent;
-    private final User editor;
-    private final String editReason;
     private final Integer oldVersion;
-    private final Document document;
+    private final Long editorId;
+    private final String editorName;
+    private final String editReason;
 
-    public DocumentUpdatedEvent(Document document,
-                                String oldTitle,
-                                String oldContent,
+    public DocumentUpdatedEvent(Long documentId,
+                                String oldTitle, String oldContent,
+                                String newTitle, String newContent,
                                 Integer oldVersion,
-                                User editor,
+                                Long editorId, String editorName,
                                 String editReason) {
-        this.document = document;
-        this.documentId = document.getId();
+        this.documentId = documentId;
         this.oldTitle = oldTitle;
         this.oldContent = oldContent;
-        this.newTitle = document.getTitle();
-        this.newContent = document.getContent();
+        this.newTitle = newTitle;
+        this.newContent = newContent;
         this.oldVersion = oldVersion;
-        this.editor = editor;
+        this.editorId = editorId;
+        this.editorName = editorName;
         this.editReason = editReason;
     }
 }
