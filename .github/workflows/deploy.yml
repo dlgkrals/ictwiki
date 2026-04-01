@@ -52,5 +52,5 @@ jobs:
             
             JAR_FILE=$(ls -t wiki*.jar 2>/dev/null | grep -v plain | head -n 1)
             
-            nohup java -jar "$JAR_FILE" > app.log 2>&1 &
+            nohup java -jar -Xms128m -Xmx384m -XX:+UseG1GC "$JAR_FILE" > app.log 2>&1 &
 #            nohup java -jar *.jar > app.log 2>&1 &
