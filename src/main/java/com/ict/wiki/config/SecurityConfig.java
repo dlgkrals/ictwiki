@@ -126,7 +126,9 @@ public class SecurityConfig {
                                 "/api/auth/reset-password",
                                 "/api/auth/csrf-token",
                                 "/api/test/public",
-                                "/api/files/**"
+                                "/api/files/**",
+                                "/actuator/prometheus",
+                                "/actuator/health"
                         ).permitAll()
 
                         // 나머지 요청은 인증 필요
