@@ -17,7 +17,7 @@ public class JpaConfig {
 
     /**
      * JPA Auditing을 위한 현재 사용자 제공
-     * Spring Security의 SecurityContext에서 사용자 정보를 가져옵니다
+     * Spring Security의 SecurityContext에서 사용자 정보를 가져옵니다.
      */
     @Bean
     public AuditorAware<String> auditorProvider() {
