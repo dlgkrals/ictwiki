@@ -1,6 +1,7 @@
 package com.ict.wiki.exception;
 
 import com.ict.wiki.global.ErrorResponse;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
@@ -45,5 +46,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .internalServerError()
                 .body(ErrorResponse.of(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "서버 오류가 발생했습니다"));
+    }
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleEntityNotFoundException(EntityNotFoundException ex) {
+        log.warn("Entity not found: {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ErrorResponse.of(HttpStatus.NOT_FOUND, "NOT_FOUND", ex.getMessage()));
     }
 }

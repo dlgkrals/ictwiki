@@ -8,6 +8,7 @@ import com.ict.wiki.security.handler.LoginFailureHandler;
 import com.ict.wiki.security.handler.LoginSuccessHandler;
 import com.ict.wiki.security.handler.RestAccessDeniedHandler;
 import com.ict.wiki.security.handler.RestAuthenticationEntryPoint;
+import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -115,6 +116,7 @@ public class SecurityConfig {
 
                 // URL 기반 접근 제어
                 .authorizeHttpRequests(auth -> auth
+                        .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                         // 인증 없이 접근 가능한 경로
                         .requestMatchers(
                                 "/api/auth/login",
