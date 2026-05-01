@@ -8,6 +8,8 @@ import com.ict.wiki.login.domain.Role;
 import com.ict.wiki.login.domain.User;
 import com.ict.wiki.login.dto.request.UserUpdateRequest;
 import com.ict.wiki.login.repository.UserRepository;
+import com.ict.wiki.util.AesEncryptionUtil;
+import com.ict.wiki.util.EmailHashUtil;
 import com.ict.wiki.util.PhoneNumberUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +33,7 @@ import java.util.concurrent.ExecutionException;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final EmailHashUtil emailHashUtil;
 
     // STAFF 목록 캐시 (영구 유지, 변경 시에만 무효화)
     private final Cache<String, List<User>> staffCache = CacheBuilder.newBuilder()
@@ -48,7 +51,7 @@ public class UserService {
      * @return 사용자
      */
     public User findByEmail(String email) {
-        return userRepository.findByEmail(email)
+        return userRepository.findByEmailHash(emailHashUtil.hash(email))
                 .orElseThrow(() -> AuthException.of(AuthErrorCode.USER_NOT_FOUND));
     }
 
@@ -70,7 +73,7 @@ public class UserService {
      * @return 중복 여부
      */
     public boolean existsByEmail(String email) {
-        return userRepository.existsByEmail(email);
+        return userRepository.existsByEmailHash(emailHashUtil.hash(email));
     }
 
     /**

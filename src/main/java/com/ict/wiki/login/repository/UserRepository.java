@@ -58,4 +58,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * 역할별 회원 수
      */
     long countByRole(Role role);
+
+    /**
+     * 해시 컬럼 관련 메서드
+     */
+    Optional<User> findByEmailHash(String emailHash);
+    boolean existsByEmailHash(String emailHash);
 }

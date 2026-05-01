@@ -2,6 +2,7 @@ package com.ict.wiki.security.auth;
 
 import com.ict.wiki.login.domain.User;
 import com.ict.wiki.login.repository.UserRepository;
+import com.ict.wiki.login.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.DisabledException;
@@ -19,7 +20,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
 
-    private final UserRepository userRepository;
+    private final UserService userService;
 
     /**
      * Security가 인증 시 호출하는 메서드
@@ -31,19 +32,19 @@ public class CustomUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         log.debug("사용자 조회 시도 - Email: {}", username);
 
-        User user = userRepository.findByEmail(username)
-                .orElseThrow(() -> {
-                    log.warn("사용자를 찾을 수 없음 - Email: {}", username);
-                    return new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + username);
-                });
+        User user;
+        try {
+            user = userService.findByEmail(username);
+        } catch (Exception e) {
+            log.warn("사용자를 찾을 수 없음 - Email: {}", username);
+            throw new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + username);
+        }
 
-        // 비활성 계정 체크
         if (!user.isActive()) {
             log.warn("비활성 계정 로그인 시도 - Email: {}", username);
             throw new DisabledException("이메일 인증이 필요합니다");
         }
 
-        // 승인되지 않은 계정 체크
         if (!user.isApproved()) {
             log.warn("미승인 계정 로그인 시도 - Email: {}", username);
             throw new DisabledException("관리자 승인 대기 중입니다");

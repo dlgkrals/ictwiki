@@ -6,6 +6,8 @@ import com.ict.wiki.login.domain.Role;
 import com.ict.wiki.login.domain.User;
 import com.ict.wiki.login.dto.request.LoginRequest;
 import com.ict.wiki.login.dto.request.SignupRequest;
+import com.ict.wiki.util.AesEncryptionUtil;
+import com.ict.wiki.util.EmailHashUtil;
 import com.ict.wiki.util.PasswordUtil;
 import com.ict.wiki.util.PhoneNumberUtil;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,7 @@ public class AuthService {
     private final UserService userService;
     private final LoginAttemptService loginAttemptService;
     private final EmailVerificationService emailVerificationService;
+    private final EmailHashUtil emailHashUtil;
 
     public void signup(SignupRequest request) {
         String email = request.getEmail();
@@ -41,6 +44,8 @@ public class AuthService {
                 .active(false)
                 .approved(false)
                 .build();
+
+        user.updateEmailHash(emailHashUtil.hash(email));
 
         emailVerificationService.sendVerificationEmail(email);
         userService.save(user);

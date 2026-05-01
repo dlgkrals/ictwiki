@@ -1,6 +1,7 @@
 package com.ict.wiki.login.domain;
 
 import com.ict.wiki.BaseEntity;
+import com.ict.wiki.util.AesEncryptionUtil;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -18,15 +19,18 @@ public class User extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Convert(converter = AesEncryptionUtil.class)
     @Column(nullable = false, unique = true)
     private String email; // student@g.seoil.ac.kr
 
     @Column(nullable = false)
     private String password;
 
+    @Convert(converter = AesEncryptionUtil.class)
     @Column(nullable = false)
     private String name;
 
+    @Convert(converter = AesEncryptionUtil.class)
     private String phoneNumber; // 핸드폰 번호
 
     @Enumerated(EnumType.STRING)
@@ -44,6 +48,12 @@ public class User extends BaseEntity {
      */
     @Column(nullable = false)
     private boolean approved = false;
+
+    /**
+     * 이메일 조회시 모든 이메일을 복호화하지 않기 위한 해시 컬럼
+     */
+    @Column(name = "email_hash", unique = true)
+    private String emailHash;
 
     // 비밀번호 업데이트
     public void updatePassword(String encodedPassword) {
@@ -100,5 +110,20 @@ public class User extends BaseEntity {
      */
     public void changePasswordByAdmin(String newPassword) {
         this.password = newPassword;
+    }
+
+    /**
+     * 개인정보 암호화 마이그레이션용
+     */
+    public void encryptPersonalInfo(String encryptedEmail, String encryptedName,
+                                    String encryptedPhoneNumber, String emailHash) {
+        this.email = encryptedEmail;
+        this.name = encryptedName;
+        this.phoneNumber = encryptedPhoneNumber;
+        this.emailHash = emailHash;
+    }
+
+    public void updateEmailHash(String emailHash) {
+        this.emailHash = emailHash;
     }
 }
