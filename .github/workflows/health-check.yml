@@ -1,0 +1,21 @@
+name: Health Check
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check server health
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://api.ictwiki.site/actuator/health)
+          if [ "$STATUS" != "200" ]; then
+            curl -X POST "$DISCORD_WEBHOOK" \
+              -H "Content-Type: application/json" \
+              -d "{\"content\": \"🔴 **[ictwiki] 서버 장애 감지**\\n즉시 확인 및 조치 바랍니다.\\nHTTP status: \`$STATUS\`\"}"
+          fi
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
