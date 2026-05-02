@@ -11,7 +11,7 @@ jobs:
     steps:
       - name: Check server health
         run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://api.ictwiki.site/actuator/health)
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://api.ictwiki.site/actuator/health123)
           if [ "$STATUS" != "200" ]; then
             curl -X POST "$DISCORD_WEBHOOK" \
               -H "Content-Type: application/json" \
