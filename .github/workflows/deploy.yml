@@ -52,5 +52,6 @@ jobs:
             
             JAR_FILE=$(ls -t wiki*.jar 2>/dev/null | grep -v plain | head -n 1)
             
-            nohup java -jar -Xms128m -Xmx384m -XX:+UseG1GC "$JAR_FILE" > app.log 2>&1 &
+            nohup java -jar -Xms64m -Xmx256m -XX:+UseG1GC -XX:MaxMetaspaceSize=128m -XX:MetaspaceSize=64m -XX:ReservedCodeCacheSize=48m -XX:+UseStringDeduplication -XX:TieredStopAtLevel=1 "$JAR_FILE" > app.log 2>&1 &
+#            nohup java -jar -Xms128m -Xmx384m -XX:+UseG1GC "$JAR_FILE" > app.log 2>&1 &
 #            nohup java -jar *.jar > app.log 2>&1 &
