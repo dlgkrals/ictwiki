@@ -2,7 +2,7 @@ name: Deploy to EC2
 
 on:
   push:
-    branches: [ main ]
+    branches: [ feature/graalvm-native ]
 
 jobs:
   build-and-deploy:
@@ -12,46 +12,39 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Set up JDK
-        uses: actions/setup-java@v3
+      - name: Set up GraalVM
+        uses: graalvm/setup-graalvm@v1
         with:
           java-version: '17'
-          distribution: 'temurin'
+          distribution: 'graalvm'
 
-      # application.yml을 시크릿에서 생성
       - name: Create application.yml
         run: |
           mkdir -p src/main/resources
           echo "${{ secrets.APPLICATION_PROD_YML }}" > src/main/resources/application.yml
 
-      - name: Build with Gradle
-        run: ./gradlew build -x test
+      - name: Build Native Image
+        run: ./gradlew nativeCompile -x test
 
-      # EC2로 JAR 파일 전송
-      - name: Transfer JAR to EC2
+      - name: Transfer binary to EC2
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "build/libs/*.jar"
+          source: "build/native/nativeCompile/wiki"
           target: "/home/ubuntu/app"
 
-      # EC2에서 애플리케이션 실행
       - name: Deploy on EC2
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: OPENAI_API_KEY
           script: |
-            cd /home/ubuntu/app/build/libs
             sudo fuser -k 8080/tcp || true
             sleep 2
-            
-            JAR_FILE=$(ls -t wiki*.jar 2>/dev/null | grep -v plain | head -n 1)
-            
-            nohup java -jar -Xms64m -Xmx256m -XX:+UseG1GC -XX:MaxMetaspaceSize=128m -XX:MetaspaceSize=64m -XX:ReservedCodeCacheSize=48m -XX:+UseStringDeduplication -XX:TieredStopAtLevel=1 "$JAR_FILE" > app.log 2>&1 &
-#            nohup java -jar -Xms128m -Xmx384m -XX:+UseG1GC "$JAR_FILE" > app.log 2>&1 &
-#            nohup java -jar *.jar > app.log 2>&1 &
+            chmod +x /home/ubuntu/app/build/native/nativeCompile/wiki
+            nohup /home/ubuntu/app/build/native/nativeCompile/wiki \
+              -Dencryption.aes-key=${{ secrets.AES_KEY }} \
+              > /home/ubuntu/app/app.log 2>&1 &
