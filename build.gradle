@@ -2,6 +2,7 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.5.7'
 	id 'io.spring.dependency-management' version '1.1.7'
+	id 'org.graalvm.buildtools.native' version '0.10.6'
 }
 
 group = 'com.ict'
@@ -24,37 +25,25 @@ repositories {
 	mavenCentral()
 }
 
-dependencyManagement {
-	imports {
-		mavenBom "org.springframework.ai:spring-ai-bom:1.0.0"
-	}
-}
+// ✅ dependencyManagement 블록 전체 제거 (spring-ai-bom 삭제)
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 
-	//모니터링
+	// 모니터링
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'io.micrometer:micrometer-registry-prometheus'
 
-	//엑셀
-	implementation 'org.apache.poi:poi-ooxml:5.2.3'
 
-	//spring ai
-	implementation 'org.springframework.ai:spring-ai-starter-model-openai'
-
-	// Spring Security 추가
+	// Spring Security
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 
-	// 이메일 발송
+	// 이메일
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 
-	// BCrypt 암호화를 위한 의존성
-	implementation 'org.mindrot:jbcrypt:0.4'
-
-	// Guava Cache (로그인 시도 관리)
+	// Guava Cache
 	implementation 'com.google.guava:guava:33.0.0-jre'
 
 	compileOnly 'org.projectlombok:lombok'
@@ -66,4 +55,15 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+graalvmNative {
+	binaries {
+		main {
+			buildArgs.add('-H:+AddAllCharsets')
+			buildArgs.add('-H:IncludeResourceBundles=org.apache.xmlbeans.impl.regex.message')
+			buildArgs.add('-H:IncludeResources=org/apache/poi/schemas/.*')
+			buildArgs.add('-H:IncludeResources=org/apache/xmlbeans/.*')
+		}
+	}
 }

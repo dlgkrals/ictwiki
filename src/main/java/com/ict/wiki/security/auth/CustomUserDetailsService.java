@@ -36,9 +36,13 @@ public class CustomUserDetailsService implements UserDetailsService {
         try {
             user = userService.findByEmail(username);
         } catch (Exception e) {
-            log.warn("사용자를 찾을 수 없음 - Email: {}", username);
+            log.warn("사용자 조회 실패 - Email: {}, 예외타입: {}, 메시지: {}",
+                    username, e.getClass().getName(), e.getMessage(), e);
             throw new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + username);
         }
+
+        log.info("DB 조회 성공 - userId: {}, active: {}, approved: {}",
+                user.getId(), user.isActive(), user.isApproved());
 
         if (!user.isActive()) {
             log.warn("비활성 계정 로그인 시도 - Email: {}", username);
