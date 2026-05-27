@@ -86,7 +86,7 @@ public class InquiryService {
      * 민원 단건 조회
      */
     public Inquiry findById(Long id) {
-        return inquiryRepository.findById(id)
+        return inquiryRepository.findByIdWithWorkers(id)
                 .orElseThrow(() -> InquiryException.of(InquiryErrorCode.INQUIRY_NOT_FOUND));
     }
 
@@ -206,8 +206,7 @@ public class InquiryService {
 
     @Transactional
     public void complete(Long id) {
-        Inquiry inquiry = inquiryRepository.findById(id)
-                .orElseThrow(() -> InquiryException.of(InquiryErrorCode.INQUIRY_NOT_FOUND));
+        Inquiry inquiry = findById(id);
 
         inquiry.complete(); // 엔티티에 위임
 

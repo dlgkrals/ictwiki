@@ -59,7 +59,7 @@ public class SimilarCaseService {
      */
     @Transactional
     public SimilarCaseResult getOrCreate(Long inquiryId) {
-        Inquiry inquiry = inquiryRepository.findById(inquiryId)
+        Inquiry inquiry = inquiryRepository.findByIdWithWorkers(inquiryId)
                 .orElseThrow(() -> RagException.of(RagErrorCode.SIMILAR_CASE_NOT_FOUND));
 
         Optional<InquirySimilarCase> existing = similarCaseRepository.findByInquiry(inquiry);
@@ -122,7 +122,7 @@ public class SimilarCaseService {
                 .map(Long::parseLong)
                 .collect(Collectors.toList());
 
-        List<ReferenceItem> references = inquiryRepository.findAllById(ids).stream()
+        List<ReferenceItem> references = inquiryRepository.findAllByIdWithWorkers(ids).stream()
                 .map(related -> new ReferenceItem(
                         related.getId(),
                         related.getType().getDescription(),

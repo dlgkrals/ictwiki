@@ -11,9 +11,16 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
+
+    @Query("SELECT i FROM Inquiry i LEFT JOIN FETCH i.worker LEFT JOIN FETCH i.subWorker LEFT JOIN FETCH i.locations WHERE i.id = :id")
+    Optional<Inquiry> findByIdWithWorkers(@Param("id") Long id);
+
+    @Query("SELECT DISTINCT i FROM Inquiry i LEFT JOIN FETCH i.worker LEFT JOIN FETCH i.subWorker LEFT JOIN FETCH i.locations WHERE i.id IN :ids")
+    List<Inquiry> findAllByIdWithWorkers(@Param("ids") List<Long> ids);
 
     @Query("SELECT i FROM Inquiry i LEFT JOIN FETCH i.worker WHERE i.worker.id = :workerId AND " +
             "(FUNCTION('DATE', i.completedAt) = :date OR " +
