@@ -4,6 +4,7 @@ import com.ict.wiki.login.service.LoginAttemptService;
 import com.ict.wiki.security.auth.CustomAuthenticationProvider;
 import com.ict.wiki.security.auth.CustomUserDetailsService;
 import com.ict.wiki.security.filter.JsonAuthenticationFilter;
+import com.ict.wiki.security.filter.ReadOnlyDemoFilter;
 import com.ict.wiki.security.handler.LoginFailureHandler;
 import com.ict.wiki.security.handler.LoginSuccessHandler;
 import com.ict.wiki.security.handler.RestAccessDeniedHandler;
@@ -25,6 +26,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
 import org.springframework.security.web.authentication.rememberme.PersistentTokenBasedRememberMeServices;
@@ -73,6 +75,9 @@ public class SecurityConfig {
     @Value("${app.remember-me.key}")
     private String rememberMeKey;
 
+    @Value("${app.demo.email:}")
+    private String demoEmail;
+
     /**
      * Security 필터 체인 설정
      */
@@ -88,6 +93,8 @@ public class SecurityConfig {
                 // JSON 로그인 필터 등록
                 .addFilterBefore(jsonAuthenticationFilter(),
                         UsernamePasswordAuthenticationFilter.class)
+
+                .addFilterBefore(new ReadOnlyDemoFilter(demoEmail), AuthorizationFilter.class)
 
                 // 세션 관리
                 .sessionManagement(session -> session
