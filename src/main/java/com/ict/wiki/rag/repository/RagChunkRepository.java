@@ -13,10 +13,19 @@ import java.util.Optional;
 public interface RagChunkRepository extends JpaRepository<RagChunk, Long> {
 
     /**
-     * 유사도 계산을 위한 전체 벡터 로드
-     * (900건 × 512차원 × 4bytes ≈ 1.8MB, 메모리 부담 없음)
+     * pgvector <=> 코사인 거리로 상위 K개 유사 청크 검색 (DB 처리)
+     * :queryVector 형식: "[0.1, -0.2, ...]"
      */
-    List<RagChunk> findAll();
+    @Query(value = """
+            SELECT * FROM rag_chunks
+            ORDER BY embedding <=> CAST(:queryVector AS vector)
+            LIMIT :limit
+            """, nativeQuery = true)
+    List<RagChunk> findTopKByCosineDistance(
+            @Param("queryVector") String queryVector,
+            @Param("limit") int limit
+    );
+
 
     /**
      * 민원 ID로 기존 청크 조회 (중복 저장 방지)

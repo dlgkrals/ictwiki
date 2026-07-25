@@ -10,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,7 +32,7 @@ public class RagService {
     private final RagChunkRepository ragChunkRepository;
     private final EmbeddingService embeddingService;
 
-    private static final double SIMILARITY_THRESHOLD = 0.7;
+    private static final float SIMILARITY_THRESHOLD = 0.7f;
     private static final int TOP_K = 5;
 
     // ===== 임베딩 저장 =====
@@ -74,37 +73,50 @@ public class RagService {
     // ===== 유사 청크 검색 =====
 
     /**
-     * 자연어 질문에 대한 유사 청크 검색
+     * 자연어 질문에 대한 유사 청크 검색 (pgvector <=> 코사인 거리, DB 처리)
      *
      * @param question 사용자 질문
      * @return 유사도 순 정렬된 청크 목록 (상위 TOP_K개, 임계값 이상만)
      */
     public List<ScoredChunk> search(String question) {
         float[] queryVector = embeddingService.embed(question);
-        List<RagChunk> allChunks = ragChunkRepository.findAll();
+        String vectorStr = toVectorString(queryVector);
 
-        return allChunks.stream()
-                .map(chunk -> new ScoredChunk(chunk, cosineSimilarity(queryVector, chunk.getEmbedding())))
+        return ragChunkRepository.findTopKByCosineDistance(vectorStr, TOP_K)
+                .stream()
+                .map(chunk -> {
+                    float cosineDistance = cosineSimilarity(queryVector, chunk.getEmbedding());
+                    return new ScoredChunk(chunk, cosineDistance);
+                })
                 .filter(sc -> sc.score() >= SIMILARITY_THRESHOLD)
-                .sorted(Comparator.comparingDouble(ScoredChunk::score).reversed())
-                .limit(TOP_K)
                 .collect(Collectors.toList());
     }
 
-    // ===== 코사인 유사도 계산 =====
+    // ===== 헬퍼 =====
 
-    private double cosineSimilarity(float[] a, float[] b) {
+    /** float[] → pgvector 문자열 "[0.1, -0.2, ...]" */
+    private String toVectorString(float[] v) {
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < v.length; i++) {
+            if (i > 0) sb.append(',');
+            sb.append(v[i]);
+        }
+        return sb.append(']').toString();
+    }
+
+    /** DB에서 받은 청크의 코사인 유사도 계산 (임계값 필터용) */
+    private float cosineSimilarity(float[] a, float[] b) {
         double dot = 0, normA = 0, normB = 0;
         for (int i = 0; i < a.length; i++) {
             dot   += a[i] * b[i];
             normA += a[i] * a[i];
             normB += b[i] * b[i];
         }
-        if (normA == 0 || normB == 0) return 0;
-        return dot / (Math.sqrt(normA) * Math.sqrt(normB));
+        if (normA == 0 || normB == 0) return 0f;
+        return (float) (dot / (Math.sqrt(normA) * Math.sqrt(normB)));
     }
 
     // ===== 내부 레코드 =====
 
-    public record ScoredChunk(RagChunk chunk, double score) {}
+    public record ScoredChunk(RagChunk chunk, float score) {}
 }

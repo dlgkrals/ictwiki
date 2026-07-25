@@ -5,6 +5,8 @@ import com.ict.wiki.exception.custom.InquiryException;
 import com.ict.wiki.inquiry.domain.*;
 import com.ict.wiki.inquiry.dto.request.InquirySaveRequest;
 import com.ict.wiki.inquiry.dto.request.LocationRequest;
+import com.ict.wiki.global.CursorPageResponse;
+import com.ict.wiki.inquiry.dto.response.InquirySummaryResponse;
 import com.ict.wiki.inquiry.events.InquiryCompletedEvent;
 import com.ict.wiki.inquiry.repository.InquiryRepository;
 import com.ict.wiki.login.domain.User;
@@ -95,6 +97,31 @@ public class InquiryService {
      */
     public List<Inquiry> findAll() {
         return inquiryRepository.findAllWithWorker();
+    }
+
+    /**
+     * 커서 기반 페이지네이션 (무한 스크롤)
+     * cursorId == null 이면 첫 페이지
+     */
+    public CursorPageResponse<InquirySummaryResponse> findAllByCursor(Long cursorId, int size) {
+        List<Long> ids = cursorId == null
+                ? inquiryRepository.findFirstIds(size + 1)
+                : inquiryRepository.findIdsBefore(cursorId, size + 1);
+
+        boolean hasNext = ids.size() > size;
+        if (hasNext) ids = ids.subList(0, size);
+
+        if (ids.isEmpty()) return CursorPageResponse.empty();
+
+        List<Inquiry> inquiries = inquiryRepository.findAllByIdWithWorkers(ids);
+        inquiries.sort((a, b) -> Long.compare(b.getId(), a.getId()));
+
+        Long nextCursor = hasNext ? ids.get(ids.size() - 1) : null;
+        List<InquirySummaryResponse> content = inquiries.stream()
+                .map(InquirySummaryResponse::from)
+                .toList();
+
+        return new CursorPageResponse<>(content, nextCursor, hasNext);
     }
 
     /**

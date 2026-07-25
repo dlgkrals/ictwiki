@@ -35,7 +35,7 @@ public class DocumentHistoryService {
      */
     @Transactional
     public void createInitialHistory(DocumentCreatedEvent event) {
-        Document document = documentRepository.findById(event.getDocumentId())
+        Document document = documentRepository.findByIdWithAuthorAndLastEditor(event.getDocumentId())
                 .orElseThrow(() -> new IllegalStateException("문서를 찾을 수 없습니다: " + event.getDocumentId()));
         User author = userRepository.findById(event.getAuthorId())
                 .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다: " + event.getAuthorId()));
@@ -58,7 +58,7 @@ public class DocumentHistoryService {
      */
     @Transactional
     public void createUpdateHistory(DocumentUpdatedEvent event) {
-        Document document = documentRepository.findById(event.getDocumentId())
+        Document document = documentRepository.findByIdWithAuthorAndLastEditor(event.getDocumentId())
                 .orElseThrow(() -> new IllegalStateException("문서를 찾을 수 없습니다: " + event.getDocumentId()));
         User editor = userRepository.findById(event.getEditorId())
                 .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다: " + event.getEditorId()));

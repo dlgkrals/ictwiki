@@ -55,7 +55,6 @@ public class DocumentHistory {
      * 당시 내용
      */
     @Column(nullable = false, columnDefinition = "TEXT")
-    @Lob
     private String content;
 
     /**

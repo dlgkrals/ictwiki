@@ -1,9 +1,9 @@
 package com.ict.wiki.rag.domain;
 
+import com.ict.wiki.config.FloatVectorType;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
+import org.hibernate.annotations.Type;
 
 import java.time.LocalDateTime;
 
@@ -43,11 +43,11 @@ public class RagChunk {
     private String content;
 
     /**
-     * 512차원 벡터 (JSON float 배열)
+     * 512차원 벡터 (pgvector vector 타입)
      * ex) [0.123, -0.456, ...]
      */
-    @Column(nullable = false, columnDefinition = "JSON")
-    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(nullable = false, columnDefinition = "vector(512)")
+    @Type(FloatVectorType.class)
     private float[] embedding;
 
     @Column(nullable = false, updatable = false)

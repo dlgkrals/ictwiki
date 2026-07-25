@@ -29,6 +29,10 @@ public class InquirySummaryResponse {
     private String subWorkerName;
     private InquiryMethod method;
 
+    // 민원 내용
+    private String description;
+    private String solution;
+
     // 요청자
     private String requester;
 
@@ -52,6 +56,8 @@ public class InquirySummaryResponse {
                 .subWorkerId(inquiry.getSubWorker() != null ? inquiry.getSubWorker().getId() : null)
                 .subWorkerName(inquiry.getSubWorker() != null ? inquiry.getSubWorker().getName() : null)
                 .method(inquiry.getMethod())
+                .description(inquiry.getDescription())
+                .solution(inquiry.getSolution())
                 .requester(inquiry.getRequester())
                 .locations(inquiry.getLocations().stream()
                         .map(LocationResponse::from)

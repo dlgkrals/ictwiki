@@ -6,7 +6,7 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
 
     steps:
       - name: Checkout
@@ -33,7 +33,8 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           source: "build/native/nativeCompile/wiki"
-          target: "/home/ubuntu/app"
+          target: "/home/ubuntu"
+          strip_components: 3
 
       - name: Deploy on EC2
         uses: appleboy/ssh-action@master
@@ -42,9 +43,9 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            sudo fuser -k 8080/tcp || true
+            pkill -x wiki || true
             sleep 2
-            chmod +x /home/ubuntu/app/build/native/nativeCompile/wiki
-            nohup /home/ubuntu/app/build/native/nativeCompile/wiki \
+            chmod +x /home/ubuntu/wiki
+            nohup /home/ubuntu/wiki \
               -Dencryption.aes-key=${{ secrets.AES_KEY }} \
-              > /home/ubuntu/app/app.log 2>&1 &
+              > /home/ubuntu/app.log 2>&1 &

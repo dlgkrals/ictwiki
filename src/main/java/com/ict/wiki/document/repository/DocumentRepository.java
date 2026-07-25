@@ -19,6 +19,9 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
      */
     Optional<Document> findByTitleIgnoreCase(String title);
 
+    @Query("SELECT d FROM Document d JOIN FETCH d.author LEFT JOIN FETCH d.lastEditor WHERE LOWER(d.title) = LOWER(:title)")
+    Optional<Document> findByTitleIgnoreCaseWithAuthor(@Param("title") String title);
+
     /**
      * 제목으로 문서 조회 (삭제되지 않은 것만)
      */
@@ -116,4 +119,15 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
      */
     @Query("SELECT COUNT(d) > 0 FROM Document d WHERE d.title = :title AND d.deleted = false")
     boolean existsByTitleAndNotDeleted(@Param("title") String title);
+
+    // ── 커서 기반 페이지네이션 ──
+
+    @Query("SELECT d.id FROM Document d WHERE d.deleted = false ORDER BY d.id DESC LIMIT :size")
+    List<Long> findFirstIds(@Param("size") int size);
+
+    @Query("SELECT d.id FROM Document d WHERE d.id < :cursorId AND d.deleted = false ORDER BY d.id DESC LIMIT :size")
+    List<Long> findIdsBefore(@Param("cursorId") Long cursorId, @Param("size") int size);
+
+    @Query("SELECT d FROM Document d JOIN FETCH d.author WHERE d.id IN :ids")
+    List<Document> findByIdsWithAuthor(@Param("ids") List<Long> ids);
 }

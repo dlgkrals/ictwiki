@@ -2,6 +2,8 @@ package com.ict.wiki.document.service;
 
 import com.ict.wiki.document.domain.Document;
 import com.ict.wiki.document.domain.DocumentCategory;
+import com.ict.wiki.document.dto.response.DocumentSummaryResponse;
+import com.ict.wiki.global.CursorPageResponse;
 import com.ict.wiki.document.events.DocumentCreatedEvent;
 import com.ict.wiki.document.events.DocumentDeletedEvent;
 import com.ict.wiki.document.events.DocumentUpdatedEvent;
@@ -234,6 +236,30 @@ public class DocumentService {
 
         log.warn("문서 영구 삭제 - ID: {}, Title: {}, Deleted By: {}",
                 id, title, admin.getEmail());
+    }
+
+    /**
+     * 문서 목록 조회 (커서 기반 페이지네이션)
+     */
+    public CursorPageResponse<DocumentSummaryResponse> findAllByCursor(Long cursorId, int size) {
+        List<Long> ids = cursorId == null
+                ? documentRepository.findFirstIds(size + 1)
+                : documentRepository.findIdsBefore(cursorId, size + 1);
+
+        boolean hasNext = ids.size() > size;
+        if (hasNext) ids = ids.subList(0, size);
+
+        if (ids.isEmpty()) return CursorPageResponse.empty();
+
+        List<Document> documents = documentRepository.findByIdsWithAuthor(ids);
+        documents.sort((a, b) -> Long.compare(b.getId(), a.getId()));
+
+        List<DocumentSummaryResponse> content = documents.stream()
+                .map(DocumentSummaryResponse::from)
+                .toList();
+
+        Long nextCursor = hasNext ? ids.get(ids.size() - 1) : null;
+        return new CursorPageResponse<>(content, nextCursor, hasNext);
     }
 
     /**

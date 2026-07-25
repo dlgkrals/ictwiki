@@ -7,6 +7,7 @@ import com.ict.wiki.document.dto.request.DocumentUpdateRequest;
 import com.ict.wiki.document.dto.response.DocumentCategoryResponse;
 import com.ict.wiki.document.dto.response.DocumentResponse;
 import com.ict.wiki.document.dto.response.DocumentSummaryResponse;
+import com.ict.wiki.global.CursorPageResponse;
 import com.ict.wiki.document.service.DocumentService;
 import com.ict.wiki.security.auth.CustomUserDetails;
 import jakarta.validation.Valid;
@@ -90,16 +91,14 @@ public class DocumentController {
     }
 
     /**
-     * 모든 문서 목록 조회
-     * GET /api/documents
+     * 문서 목록 조회 (커서 기반 무한 스크롤)
+     * GET /api/documents?cursor=123&size=20
      */
     @GetMapping
-    public ResponseEntity<List<DocumentSummaryResponse>> getAllDocuments() {
-        List<Document> documents = documentService.getAllDocuments();
-        List<DocumentSummaryResponse> response = documents.stream()
-                .map(DocumentSummaryResponse::from)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(response);
+    public ResponseEntity<CursorPageResponse<DocumentSummaryResponse>> getAllDocuments(
+            @RequestParam(required = false) Long cursor,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(documentService.findAllByCursor(cursor, size));
     }
 
     /**

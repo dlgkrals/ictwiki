@@ -6,6 +6,7 @@ import com.ict.wiki.inquiry.domain.InquiryStatus;
 import com.ict.wiki.inquiry.domain.InquiryType;
 import com.ict.wiki.inquiry.dto.request.*;
 import com.ict.wiki.inquiry.dto.response.BuildingResponse;
+import com.ict.wiki.global.CursorPageResponse;
 import com.ict.wiki.inquiry.dto.response.InquiryResponse;
 import com.ict.wiki.inquiry.dto.response.InquiryStatusResponse;
 import com.ict.wiki.inquiry.dto.response.InquirySummaryResponse;
@@ -97,18 +98,15 @@ public class InquiryController {
     }
 
     /**
-     * 전체 목록 조회
-     * GET /api/inquiries
+     * 민원 목록 조회 (커서 기반 무한 스크롤)
+     * GET /api/inquiries?cursor=123&size=20
      */
     @GetMapping
-    public ResponseEntity<List<InquiryResponse>> getAllInquiries() {
-        List<Inquiry> inquiries = inquiryService.findAll();
+    public ResponseEntity<CursorPageResponse<InquirySummaryResponse>> getAllInquiries(
+            @RequestParam(required = false) Long cursor,
+            @RequestParam(defaultValue = "20") int size) {
 
-        List<InquiryResponse> response = inquiries.stream()
-                .map(InquiryResponse::from)
-                .collect(Collectors.toList());
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(inquiryService.findAllByCursor(cursor, size));
     }
 
     /**

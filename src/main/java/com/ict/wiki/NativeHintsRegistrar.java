@@ -1,6 +1,7 @@
 package com.ict.wiki;
 
 import com.ict.wiki.admin.dto.response.UserManagementResponse;
+import com.ict.wiki.config.FloatVectorType;
 import com.ict.wiki.login.dto.request.LoginRequest;
 import com.ict.wiki.login.dto.response.LoginResponse;
 import com.ict.wiki.login.dto.response.UserResponse;
@@ -40,6 +41,9 @@ public class NativeHintsRegistrar implements RuntimeHintsRegistrar {
 
             // JPA Converter
             AesEncryptionUtil.class,
+
+            // Hibernate UserType (pgvector)
+            FloatVectorType.class,
 
             // 시간표 업로드 Request
             ScheduleImportRequest.class,

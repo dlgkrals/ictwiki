@@ -23,13 +23,13 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
     List<Inquiry> findAllByIdWithWorkers(@Param("ids") List<Long> ids);
 
     @Query("SELECT i FROM Inquiry i LEFT JOIN FETCH i.worker WHERE i.worker.id = :workerId AND " +
-            "(FUNCTION('DATE', i.completedAt) = :date OR " +
-            "(i.status = com.ict.wiki.inquiry.domain.InquiryStatus.IN_PROGRESS AND FUNCTION('DATE', i.createdAt) = :date))")
+            "(cast(i.completedAt as date) = :date OR " +
+            "(i.status = com.ict.wiki.inquiry.domain.InquiryStatus.IN_PROGRESS AND cast(i.createdAt as date) = :date))")
     List<Inquiry> findByWorkerIdAndDate(@Param("workerId") Long workerId, @Param("date") LocalDate date);
 
     @Query("SELECT DISTINCT i FROM Inquiry i LEFT JOIN FETCH i.worker LEFT JOIN FETCH i.subWorker LEFT JOIN FETCH i.locations " +
             "WHERE (i.worker.id = :workerId OR i.subWorker.id = :workerId) " +
-            "AND FUNCTION('DATE', i.createdAt) = :date")
+            "AND cast(i.createdAt as date) = :date")
     List<Inquiry> findByWorkerOrSubWorkerAndDate(@Param("workerId") Long workerId, @Param("date") LocalDate date);
 
     /**
@@ -37,6 +37,18 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
      */
     @Query("SELECT DISTINCT i FROM Inquiry i LEFT JOIN FETCH i.worker LEFT JOIN FETCH i.subWorker LEFT JOIN FETCH i.locations ORDER BY i.createdAt DESC")
     List<Inquiry> findAllWithWorker();
+
+    /**
+     * 커서 기반 페이지네이션 — 첫 페이지 ID 목록 (최신순)
+     */
+    @Query("SELECT i.id FROM Inquiry i ORDER BY i.id DESC LIMIT :size")
+    List<Long> findFirstIds(@Param("size") int size);
+
+    /**
+     * 커서 기반 페이지네이션 — 커서 이전 ID 목록 (최신순)
+     */
+    @Query("SELECT i.id FROM Inquiry i WHERE i.id < :cursorId ORDER BY i.id DESC LIMIT :size")
+    List<Long> findIdsBefore(@Param("cursorId") Long cursorId, @Param("size") int size);
 
     /**
      * 최근 N개 민원 (홈 페이지용)
@@ -151,42 +163,42 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
     /**
      * 특정 날짜의 민원 건수
      */
-    @Query("SELECT COUNT(i) FROM Inquiry i WHERE FUNCTION('DATE', i.createdAt) = :date")
+    @Query("SELECT COUNT(i) FROM Inquiry i WHERE cast(i.createdAt as date) = :date")
     long countByDate(@Param("date") LocalDate date);
 
     /**
      * 특정 월의 민원 건수
      */
     @Query("SELECT COUNT(i) FROM Inquiry i " +
-            "WHERE FUNCTION('YEAR', i.createdAt) = :year " +
-            "AND FUNCTION('MONTH', i.createdAt) = :month")
+            "WHERE year(i.createdAt) = :year " +
+            "AND month(i.createdAt) = :month")
     long countByYearAndMonth(@Param("year") int year, @Param("month") int month);
 
     /**
      * 특정 연도의 민원 건수
      */
-    @Query("SELECT COUNT(i) FROM Inquiry i WHERE FUNCTION('YEAR', i.createdAt) = :year")
+    @Query("SELECT COUNT(i) FROM Inquiry i WHERE year(i.createdAt) = :year")
     long countByYear(@Param("year") int year);
 
     /**
      * 일별 민원 건수 (기간 내)
      */
-    @Query("SELECT FUNCTION('DATE', i.createdAt), COUNT(i) " +
+    @Query("SELECT cast(i.createdAt as date), COUNT(i) " +
             "FROM Inquiry i " +
             "WHERE i.createdAt BETWEEN :startDate AND :endDate " +
-            "GROUP BY FUNCTION('DATE', i.createdAt) " +
-            "ORDER BY FUNCTION('DATE', i.createdAt)")
+            "GROUP BY cast(i.createdAt as date) " +
+            "ORDER BY cast(i.createdAt as date)")
     List<Object[]> countByDateRange(@Param("startDate") LocalDateTime startDate,
                                     @Param("endDate") LocalDateTime endDate);
 
     /**
      * 월별 민원 건수 (특정 연도)
      */
-    @Query("SELECT FUNCTION('MONTH', i.createdAt), COUNT(i) " +
+    @Query("SELECT month(i.createdAt), COUNT(i) " +
             "FROM Inquiry i " +
-            "WHERE FUNCTION('YEAR', i.createdAt) = :year " +
-            "GROUP BY FUNCTION('MONTH', i.createdAt) " +
-            "ORDER BY FUNCTION('MONTH', i.createdAt)")
+            "WHERE year(i.createdAt) = :year " +
+            "GROUP BY month(i.createdAt) " +
+            "ORDER BY month(i.createdAt)")
     List<Object[]> countByMonthsInYear(@Param("year") int year);
 
     // ========== 처리방식별 통계 ==========
@@ -226,38 +238,38 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
     @Query("SELECT MIN(i.createdAt) FROM Inquiry i")
     LocalDateTime findOldestCreatedAt();
 
-    @Query("SELECT MIN(i.createdAt) FROM Inquiry i WHERE FUNCTION('YEAR', i.createdAt) = :year")
+    @Query("SELECT MIN(i.createdAt) FROM Inquiry i WHERE year(i.createdAt) = :year")
     LocalDateTime findOldestCreatedAtByYear(@Param("year") int year);
 
     // ========== 연도 필터 통계 ==========
 
-    @Query("SELECT COUNT(i) FROM Inquiry i WHERE FUNCTION('YEAR', i.createdAt) = :year")
+    @Query("SELECT COUNT(i) FROM Inquiry i WHERE year(i.createdAt) = :year")
     long countAllByYear(@Param("year") int year);
 
-    @Query("SELECT i.status, COUNT(i) FROM Inquiry i WHERE FUNCTION('YEAR', i.createdAt) = :year GROUP BY i.status")
+    @Query("SELECT i.status, COUNT(i) FROM Inquiry i WHERE year(i.createdAt) = :year GROUP BY i.status")
     List<Object[]> countByStatusAndYear(@Param("year") int year);
 
-    @Query("SELECT i.type, COUNT(i) FROM Inquiry i WHERE FUNCTION('YEAR', i.createdAt) = :year GROUP BY i.type")
+    @Query("SELECT i.type, COUNT(i) FROM Inquiry i WHERE year(i.createdAt) = :year GROUP BY i.type")
     List<Object[]> countByTypeAndYear(@Param("year") int year);
 
-    @Query("SELECT i.method, COUNT(i) FROM Inquiry i WHERE i.method IS NOT NULL AND FUNCTION('YEAR', i.createdAt) = :year GROUP BY i.method")
+    @Query("SELECT i.method, COUNT(i) FROM Inquiry i WHERE i.method IS NOT NULL AND year(i.createdAt) = :year GROUP BY i.method")
     List<Object[]> countByMethodAndYear(@Param("year") int year);
 
-    @Query("SELECT l.building, COUNT(l) FROM Inquiry i JOIN i.locations l WHERE FUNCTION('YEAR', i.createdAt) = :year GROUP BY l.building ORDER BY COUNT(l) DESC")
+    @Query("SELECT l.building, COUNT(l) FROM Inquiry i JOIN i.locations l WHERE year(i.createdAt) = :year GROUP BY l.building ORDER BY COUNT(l) DESC")
     List<Object[]> countByBuildingAndYear(@Param("year") int year);
 
 // ========== 월 필터 통계 ==========
 
-    @Query("SELECT i.status, COUNT(i) FROM Inquiry i WHERE FUNCTION('YEAR', i.createdAt) = :year AND FUNCTION('MONTH', i.createdAt) = :month GROUP BY i.status")
+    @Query("SELECT i.status, COUNT(i) FROM Inquiry i WHERE year(i.createdAt) = :year AND month(i.createdAt) = :month GROUP BY i.status")
     List<Object[]> countByStatusAndYearMonth(@Param("year") int year, @Param("month") int month);
 
-    @Query("SELECT i.type, COUNT(i) FROM Inquiry i WHERE FUNCTION('YEAR', i.createdAt) = :year AND FUNCTION('MONTH', i.createdAt) = :month GROUP BY i.type")
+    @Query("SELECT i.type, COUNT(i) FROM Inquiry i WHERE year(i.createdAt) = :year AND month(i.createdAt) = :month GROUP BY i.type")
     List<Object[]> countByTypeAndYearMonth(@Param("year") int year, @Param("month") int month);
 
-    @Query("SELECT i.method, COUNT(i) FROM Inquiry i WHERE i.method IS NOT NULL AND FUNCTION('YEAR', i.createdAt) = :year AND FUNCTION('MONTH', i.createdAt) = :month GROUP BY i.method")
+    @Query("SELECT i.method, COUNT(i) FROM Inquiry i WHERE i.method IS NOT NULL AND year(i.createdAt) = :year AND month(i.createdAt) = :month GROUP BY i.method")
     List<Object[]> countByMethodAndYearMonth(@Param("year") int year, @Param("month") int month);
 
-    @Query("SELECT l.building, COUNT(l) FROM InquiryLocation l WHERE FUNCTION('YEAR', l.inquiry.createdAt) = :year AND FUNCTION('MONTH', l.inquiry.createdAt) = :month GROUP BY l.building ORDER BY COUNT(l) DESC")
+    @Query("SELECT l.building, COUNT(l) FROM InquiryLocation l WHERE year(l.inquiry.createdAt) = :year AND month(l.inquiry.createdAt) = :month GROUP BY l.building ORDER BY COUNT(l) DESC")
     List<Object[]> countByBuildingAndYearMonth(@Param("year") int year, @Param("month") int month);
 
 // ========== 주차 필터 통계 ==========
@@ -278,13 +290,13 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
 
     @Query(value = "SELECT " +
             "CASE " +
-            "  WHEN DAY(i.created_at) <= 7 THEN 1 " +
-            "  WHEN DAY(i.created_at) <= 14 THEN 2 " +
-            "  WHEN DAY(i.created_at) <= 21 THEN 3 " +
+            "  WHEN EXTRACT(DAY FROM i.created_at) <= 7 THEN 1 " +
+            "  WHEN EXTRACT(DAY FROM i.created_at) <= 14 THEN 2 " +
+            "  WHEN EXTRACT(DAY FROM i.created_at) <= 21 THEN 3 " +
             "  ELSE 4 " +
             "END, COUNT(*) " +
             "FROM inquiries i " +
-            "WHERE YEAR(i.created_at) = :year AND MONTH(i.created_at) = :month " +
+            "WHERE EXTRACT(YEAR FROM i.created_at) = :year AND EXTRACT(MONTH FROM i.created_at) = :month " +
             "GROUP BY 1 ORDER BY 1",
             nativeQuery = true)
     List<Object[]> countByWeekInMonth(@Param("year") int year, @Param("month") int month);

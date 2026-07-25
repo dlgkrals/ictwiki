@@ -39,7 +39,7 @@ public class DocumentLinkService {
      */
     @Transactional
     public void processDocumentLinks(DocumentCreatedEvent event) {
-        Document sourceDocument = documentRepository.findById(event.getDocumentId())
+        Document sourceDocument = documentRepository.findByIdWithAuthorAndLastEditor(event.getDocumentId())
                 .orElseThrow(() -> new IllegalStateException("문서를 찾을 수 없습니다: " + event.getDocumentId()));
         parseAndSaveLinks(sourceDocument, event.getContent());
     }
@@ -52,7 +52,7 @@ public class DocumentLinkService {
         linkRepository.deleteBySourceDocumentId(event.getDocumentId());
         log.debug("기존 링크 삭제 완료 - DocumentId: {}", event.getDocumentId());
 
-        Document sourceDocument = documentRepository.findById(event.getDocumentId())
+        Document sourceDocument = documentRepository.findByIdWithAuthorAndLastEditor(event.getDocumentId())
                 .orElseThrow(() -> new IllegalStateException("문서를 찾을 수 없습니다: " + event.getDocumentId()));
         parseAndSaveLinks(sourceDocument, event.getNewContent());
     }
@@ -74,7 +74,7 @@ public class DocumentLinkService {
         int linkCount = 0;
 
         for (WikiLink wikiLink : wikiLinks) {
-            Optional<Document> targetDocumentOpt = documentRepository.findByTitleIgnoreCase(wikiLink.targetTitle);
+            Optional<Document> targetDocumentOpt = documentRepository.findByTitleIgnoreCaseWithAuthor(wikiLink.targetTitle);
 
             if (targetDocumentOpt.isPresent()) {
                 Document targetDocument = targetDocumentOpt.get();

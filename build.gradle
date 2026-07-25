@@ -46,8 +46,12 @@ dependencies {
 	// Guava Cache
 	implementation 'com.google.guava:guava:33.0.0-jre'
 
+	// pgvector (PostgreSQL vector type + GraalVM native 지원)
+	implementation 'com.pgvector:pgvector:0.1.6'
+
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'com.mysql:mysql-connector-j'
+	runtimeOnly 'org.postgresql:postgresql'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -60,10 +64,11 @@ tasks.named('test') {
 graalvmNative {
 	binaries {
 		main {
-			buildArgs.add('-H:+AddAllCharsets')
-			buildArgs.add('-H:IncludeResourceBundles=org.apache.xmlbeans.impl.regex.message')
-			buildArgs.add('-H:IncludeResources=org/apache/poi/schemas/.*')
-			buildArgs.add('-H:IncludeResources=org/apache/xmlbeans/.*')
+			buildArgs.add("-H:+AddAllCharsets")
+			buildArgs.add("-H:IncludeResourceBundles=org.apache.xmlbeans.impl.regex.message")
+			buildArgs.add("-H:IncludeResources=org/apache/poi/schemas/.*")
+			buildArgs.add("-H:IncludeResources=org/apache/xmlbeans/.*")
+			buildArgs.add("-J-Xmx6g")
 		}
 	}
 }

@@ -24,11 +24,12 @@ public class Document extends BaseEntity {
     private Long id;
 
     /**
-     * 문서 제목 (고유)
+     * 문서 제목 (활성 문서 내에서만 고유)
      * - URL 경로로도 사용
      * - 예: "Java 설치 가이드"
+     * - 소프트 삭제된 문서와는 제목이 겹칠 수 있음 (DB에는 deleted=false 조건의 partial unique index로 적용)
      */
-    @Column(nullable = false, unique = true, length = 200)
+    @Column(nullable = false, length = 200)
     private String title;
 
     /**
@@ -37,7 +38,6 @@ public class Document extends BaseEntity {
      * - 위키 링크: [[문서제목]] 또는 [[표시텍스트|문서제목]]
      */
     @Column(nullable = false, columnDefinition = "TEXT")
-    @Lob
     private String content;
 
     /**
